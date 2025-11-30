@@ -1,6 +1,7 @@
 import customtkinter as ctk
 from widgets.sidebar import Sidebar
 from ui.dashboard import Dashboard
+from ui.students import StudentsPage
 from database.db_manager import DatabaseManager
 import os
 
