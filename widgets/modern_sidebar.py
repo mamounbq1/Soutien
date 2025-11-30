@@ -35,9 +35,6 @@ class ModernMenuButton(ctk.CTkButton):
             **kwargs
         )
         
-        # Configuration du padding pour aligner le texte
-        self.configure(padx=15)
-        
     def set_selected(self, selected: bool):
         """Change l'état de sélection du bouton"""
         self.is_selected = selected
