@@ -55,6 +55,10 @@ class App(ctk.CTk):
         self.current_frame = Dashboard(self, self.db)
         self.current_frame.grid(row=0, column=1, sticky="nsew", padx=20, pady=20)
 
+    def show_students(self):
+        self.current_frame = StudentsPage(self, self.db)
+        self.current_frame.grid(row=0, column=1, sticky="nsew", padx=20, pady=20)
+
     def show_placeholder(self, title):
         self.current_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.current_frame.grid(row=0, column=1, sticky="nsew", padx=20, pady=20)
