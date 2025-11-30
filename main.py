@@ -38,7 +38,7 @@ class App(ctk.CTk):
         if view_name == "dashboard":
             self.show_dashboard()
         elif view_name == "students":
-            self.show_placeholder("Gestion des Élèves")
+            self.show_students()
         elif view_name == "teachers":
             self.show_placeholder("Gestion des Enseignants")
         elif view_name == "subjects":

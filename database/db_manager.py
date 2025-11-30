@@ -128,6 +128,69 @@ class DatabaseManager:
         conn.close()
         print("Database initialized successfully.")
 
+    # --- Student Operations ---
+    def add_student(self, nom, prenom, niveau, filiere, tel, parent_tel):
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO students (nom, prenom, niveau, filiere, tel, parent_tel)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (nom, prenom, niveau, filiere, tel, parent_tel))
+        conn.commit()
+        conn.close()
+
+    def get_all_students(self):
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM students ORDER BY id DESC')
+        data = cursor.fetchall()
+        conn.close()
+        return data
+
+    def search_students(self, query):
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT * FROM students 
+            WHERE nom LIKE ? OR prenom LIKE ? OR tel LIKE ?
+        ''', (f'%{query}%', f'%{query}%', f'%{query}%'))
+        data = cursor.fetchall()
+        conn.close()
+        return data
+
+    def update_student(self, student_id, nom, prenom, niveau, filiere, tel, parent_tel):
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            UPDATE students 
+            SET nom=?, prenom=?, niveau=?, filiere=?, tel=?, parent_tel=?
+            WHERE id=?
+        ''', (nom, prenom, niveau, filiere, tel, parent_tel, student_id))
+        conn.commit()
+        conn.close()
+
+    def delete_student(self, student_id):
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM students WHERE id=?', (student_id,))
+        conn.commit()
+        conn.close()
+    
+    def get_student_inscriptions(self, student_id):
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT i.date_inscription, g.nom, s.nom 
+            FROM inscriptions i
+            JOIN groups g ON i.group_id = g.id
+            JOIN subjects s ON g.matiere_id = s.id
+            WHERE i.student_id = ?
+            ORDER BY i.date_inscription DESC
+        ''', (student_id,))
+        data = cursor.fetchall()
+        conn.close()
+        return data
+
 # Quick test
 if __name__ == "__main__":
     db = DatabaseManager()
