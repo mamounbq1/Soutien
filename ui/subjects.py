@@ -1,59 +1,142 @@
+"""
+Page de gestion des matières modernisée
+Utilise les composants modernes pour un design professionnel
+"""
+
 import customtkinter as ctk
 from tkinter import messagebox
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from config.theme import ModernTheme
+from widgets.modern_components import (
+    ModernButton,
+    ModernEntry,
+    ModernLabel,
+    ModernTextBox,
+    ModernCard,
+    SearchBar,
+    PageHeader,
+    TableHeader,
+    TableRow,
+    ActionButtons
+)
+
 
 class SubjectForm(ctk.CTkToplevel):
+    """Formulaire de matière modernisé"""
+    
     def __init__(self, parent, db_manager, subject_data=None, callback=None):
         super().__init__(parent)
+        
         self.db_manager = db_manager
         self.subject_data = subject_data
         self.callback = callback
-        self.title("Ajouter une Matière" if not subject_data else "Modifier la Matière")
-        self.geometry("500x400")
+        
+        # Configuration de la fenêtre
+        self.title("📚 Ajouter une Matière" if not subject_data else "✏️ Modifier la Matière")
+        self.geometry("550x550")
         self.resizable(False, False)
         
-        # Make modal
+        # Rendre modal
         self.transient(parent)
         self.grab_set()
         
-        self.layout_widgets()
+        # Configuration du fond
+        self.configure(fg_color=(ModernTheme.BG_LIGHT, ModernTheme.BG_DARK))
+        
+        self._create_ui()
+        
         if subject_data:
-            self.fill_fields()
-
-    def layout_widgets(self):
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=1)
-
-        # Title
-        lbl_title = ctk.CTkLabel(self, text="Informations de la matière", font=("Arial", 20, "bold"))
-        lbl_title.grid(row=0, column=0, columnspan=2, pady=20)
-
-        # Fields
-        self.nom = self.create_entry("Nom:", 1)
+            self._fill_fields()
         
-        # Description (Text Area)
-        ctk.CTkLabel(self, text="Description:").grid(row=2, column=0, padx=20, pady=10, sticky="nw")
-        self.description = ctk.CTkTextbox(self, height=100)
-        self.description.grid(row=2, column=1, padx=20, pady=10, sticky="ew")
+        # Centrer la fenêtre
+        self._center_window()
+    
+    def _center_window(self):
+        """Centre la fenêtre sur l'écran"""
+        self.update_idletasks()
+        width = self.winfo_width()
+        height = self.winfo_height()
+        x = (self.winfo_screenwidth() // 2) - (width // 2)
+        y = (self.winfo_screenheight() // 2) - (height // 2)
+        self.geometry(f"{width}x{height}+{x}+{y}")
+    
+    def _create_ui(self):
+        """Crée l'interface du formulaire"""
+        # Container principal
+        main_container = ctk.CTkFrame(self, fg_color="transparent")
+        main_container.pack(fill="both", expand=True, padx=30, pady=30)
         
-        self.tarif_mensuel = self.create_entry("Tarif Mensuel (MAD):", 3)
-
-        # Save Button
-        btn_save = ctk.CTkButton(self, text="Enregistrer", command=self.save_subject)
-        btn_save.grid(row=4, column=0, columnspan=2, pady=30, padx=20, sticky="ew")
-
-    def create_entry(self, label_text, row):
-        ctk.CTkLabel(self, text=label_text).grid(row=row, column=0, padx=20, pady=10, sticky="w")
-        entry = ctk.CTkEntry(self)
-        entry.grid(row=row, column=1, padx=20, pady=10, sticky="ew")
-        return entry
-
-    def fill_fields(self):
-        # subject_data: (id, nom, description, tarif_mensuel)
+        # En-tête
+        header = ModernLabel(
+            main_container,
+            text="📚 Informations de la matière",
+            style='heading'
+        )
+        header.pack(pady=(0, 25))
+        
+        # Carte de formulaire
+        form_card = ModernCard(main_container)
+        form_card.pack(fill="both", expand=True)
+        
+        form_content = ctk.CTkFrame(form_card, fg_color="transparent")
+        form_content.pack(fill="both", expand=True, padx=25, pady=25)
+        
+        # Nom
+        ModernLabel(form_content, text="Nom *", style='normal').pack(anchor="w", pady=(0, 5))
+        self.nom = ModernEntry(form_content, placeholder="Ex: Mathématiques")
+        self.nom.pack(fill="x", pady=(0, 15))
+        
+        # Description
+        ModernLabel(form_content, text="Description", style='normal').pack(anchor="w", pady=(0, 5))
+        self.description = ModernTextBox(form_content, height=120)
+        self.description.pack(fill="x", pady=(0, 15))
+        
+        # Tarif mensuel
+        ModernLabel(form_content, text="Tarif Mensuel (DH)", style='normal').pack(anchor="w", pady=(0, 5))
+        self.tarif_mensuel = ModernEntry(form_content, placeholder="Ex: 500")
+        self.tarif_mensuel.pack(fill="x", pady=(0, 10))
+        
+        # Note
+        note_label = ModernLabel(
+            form_content,
+            text="* Champs obligatoires",
+            style='small'
+        )
+        note_label.pack(anchor="w", pady=(10, 0))
+        
+        # Boutons d'action
+        buttons_frame = ctk.CTkFrame(main_container, fg_color="transparent")
+        buttons_frame.pack(fill="x", pady=(20, 0))
+        
+        cancel_btn = ModernButton(
+            buttons_frame,
+            text="Annuler",
+            icon="❌",
+            style='outline',
+            command=self.destroy
+        )
+        cancel_btn.pack(side="right", padx=(10, 0))
+        
+        save_btn = ModernButton(
+            buttons_frame,
+            text="Enregistrer",
+            icon="💾",
+            style='success',
+            command=self._save_subject
+        )
+        save_btn.pack(side="right")
+    
+    def _fill_fields(self):
+        """Remplit les champs avec les données existantes"""
         self.nom.insert(0, self.subject_data[1])
         self.description.insert("1.0", self.subject_data[2] or "")
         self.tarif_mensuel.insert(0, str(self.subject_data[3]) if self.subject_data[3] else "")
-
-    def save_subject(self):
+    
+    def _save_subject(self):
+        """Sauvegarde la matière"""
         data = {
             "nom": self.nom.get(),
             "description": self.description.get("1.0", "end-1c"),
@@ -76,10 +159,10 @@ class SubjectForm(ctk.CTkToplevel):
 
         if self.subject_data:
             self.db_manager.update_subject(self.subject_data[0], **data)
-            messagebox.showinfo("Succès", "Matière modifiée avec succès.")
+            messagebox.showinfo("✅ Succès", "Matière modifiée avec succès.")
         else:
             self.db_manager.add_subject(**data)
-            messagebox.showinfo("Succès", "Matière ajoutée avec succès.")
+            messagebox.showinfo("✅ Succès", "Matière ajoutée avec succès.")
         
         if self.callback:
             self.callback()
@@ -87,104 +170,137 @@ class SubjectForm(ctk.CTkToplevel):
 
 
 class SubjectsPage(ctk.CTkFrame):
+    """Page de gestion des matières modernisée"""
+    
     def __init__(self, parent, db_manager):
         super().__init__(parent, fg_color="transparent")
+        
         self.db_manager = db_manager
+        
+        # Configuration de la grille
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(2, weight=1)
-
-        # --- Header ---
-        self.header_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.header_frame.grid(row=0, column=0, sticky="ew", padx=20, pady=10)
         
-        title = ctk.CTkLabel(self.header_frame, text="Gestion des Matières", font=("Arial", 24, "bold"))
-        title.pack(side="left")
-
-        self.btn_add = ctk.CTkButton(self.header_frame, text="+ Nouvelle Matière", command=self.open_add_dialog)
-        self.btn_add.pack(side="right")
-
-        # --- Search Bar ---
-        self.search_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.search_frame.grid(row=1, column=0, sticky="ew", padx=20, pady=(0, 10))
+        self._create_ui()
+        self._load_subjects()
+    
+    def _create_ui(self):
+        """Crée l'interface utilisateur"""
+        # En-tête de page
+        header = PageHeader(
+            self,
+            title="📚 Gestion des Matières",
+            subtitle="Gérez le catalogue des matières enseignées",
+            add_button_text="Nouvelle Matière",
+            add_callback=self._open_add_dialog
+        )
+        header.grid(row=0, column=0, sticky="ew", pady=(0, 20))
         
-        self.search_entry = ctk.CTkEntry(self.search_frame, placeholder_text="Rechercher une matière...", width=300)
-        self.search_entry.pack(side="left", padx=(0, 10))
+        # Barre de recherche
+        search_bar = SearchBar(
+            self,
+            placeholder="Rechercher une matière...",
+            search_callback=self._perform_search,
+            refresh_callback=self._load_subjects
+        )
+        search_bar.grid(row=1, column=0, sticky="ew", pady=(0, 15))
         
-        self.btn_search = ctk.CTkButton(self.search_frame, text="Rechercher", width=100, command=self.perform_search)
-        self.btn_search.pack(side="left")
+        # Carte conteneur pour le tableau
+        table_card = ModernCard(self)
+        table_card.grid(row=2, column=0, sticky="nsew")
+        table_card.grid_columnconfigure(0, weight=1)
+        table_card.grid_rowconfigure(1, weight=1)
         
-        self.btn_reload = ctk.CTkButton(self.search_frame, text="↻", width=40, command=self.load_subjects)
-        self.btn_reload.pack(side="left", padx=10)
-
-        # --- Table Header ---
-        self.table_header = ctk.CTkFrame(self, height=40)
-        self.table_header.grid(row=2, column=0, sticky="new", padx=20, pady=(10,0))
-        self.table_header.grid_columnconfigure((0,1,2), weight=1)
-        self.table_header.grid_columnconfigure(3, weight=0, minsize=150)
+        # En-tête du tableau
+        headers = TableHeader(
+            table_card,
+            columns=["Nom", "Description", "Tarif Mensuel", "Actions"]
+        )
+        headers.grid(row=0, column=0, sticky="ew", padx=20, pady=(20, 0))
         
-        headers = ["Nom", "Description", "Tarif Mensuel", "Actions"]
-        for i, h in enumerate(headers):
-            ctk.CTkLabel(self.table_header, text=h, font=("Arial", 12, "bold")).grid(row=0, column=i, padx=5, pady=5)
-
-        self.scroll_frame = ctk.CTkScrollableFrame(self)
-        self.scroll_frame.grid(row=3, column=0, sticky="nsew", padx=20, pady=(0, 20))
-        self.scroll_frame.grid_columnconfigure((0,1,2), weight=1)
-        self.scroll_frame.grid_columnconfigure(3, weight=0, minsize=150)
-
-        self.load_subjects()
-
-    def load_subjects(self, subjects=None):
-        # Clear existing rows
+        # Frame scrollable pour les données
+        self.scroll_frame = ctk.CTkScrollableFrame(
+            table_card,
+            fg_color="transparent"
+        )
+        self.scroll_frame.grid(row=1, column=0, sticky="nsew", padx=20, pady=(10, 20))
+        self.scroll_frame.grid_columnconfigure(0, weight=1)
+    
+    def _load_subjects(self, subjects=None):
+        """Charge et affiche les matières"""
+        # Nettoyer le contenu existant
         for widget in self.scroll_frame.winfo_children():
             widget.destroy()
-
+        
         if subjects is None:
             subjects = self.db_manager.get_all_subjects()
-
+        
+        if not subjects:
+            no_data = ModernLabel(
+                self.scroll_frame,
+                text="Aucune matière trouvée",
+                style='secondary'
+            )
+            no_data.pack(pady=40)
+            return
+        
+        # Créer les lignes du tableau
         for i, subject in enumerate(subjects):
-            self.create_row(i, subject)
-
-    def create_row(self, index, subject):
-        # subject: (id, nom, description, tarif_mensuel)
-        row_frame = ctk.CTkFrame(self.scroll_frame, fg_color="transparent")
-        row_frame.grid(row=index, column=0, columnspan=4, sticky="ew", pady=2)
-        row_frame.grid_columnconfigure((0,1,2), weight=1)
-        row_frame.grid_columnconfigure(3, weight=0, minsize=150)
-
-        ctk.CTkLabel(row_frame, text=subject[1]).grid(row=0, column=0)
+            self._create_subject_row(subject, i)
+    
+    def _create_subject_row(self, subject, index):
+        """Crée une ligne pour une matière"""
+        # Boutons d'action
+        actions = ActionButtons(
+            self.scroll_frame,
+            on_edit=lambda s=subject: self._open_edit_dialog(s),
+            on_delete=lambda id=subject[0]: self._delete_subject(id)
+        )
+        
+        # Données de la ligne
         desc = subject[2][:50] + "..." if subject[2] and len(subject[2]) > 50 else (subject[2] or "-")
-        ctk.CTkLabel(row_frame, text=desc).grid(row=0, column=1)
-        ctk.CTkLabel(row_frame, text=f"{subject[3]} MAD" if subject[3] else "-").grid(row=0, column=2)
-
-        # Actions
-        actions_frame = ctk.CTkFrame(row_frame, fg_color="transparent")
-        actions_frame.grid(row=0, column=3)
+        data = [
+            subject[1],  # Nom
+            desc,  # Description (tronquée)
+            f"{subject[3]} DH" if subject[3] else "-",  # Tarif
+        ]
         
-        btn_edit = ctk.CTkButton(actions_frame, text="✎", width=30, height=30, 
-                                 fg_color="#F39C12", hover_color="#D35400",
-                                 command=lambda s=subject: self.open_edit_dialog(s))
-        btn_edit.pack(side="left", padx=2)
-        
-        btn_del = ctk.CTkButton(actions_frame, text="🗑", width=30, height=30, 
-                                fg_color="#E74C3C", hover_color="#C0392B",
-                                command=lambda id=subject[0]: self.delete_subject(id))
-        btn_del.pack(side="left", padx=2)
-
-    def open_add_dialog(self):
-        SubjectForm(self, self.db_manager, callback=self.load_subjects)
-
-    def open_edit_dialog(self, subject):
-        SubjectForm(self, self.db_manager, subject_data=subject, callback=self.load_subjects)
-
-    def delete_subject(self, subject_id):
-        if messagebox.askyesno("Confirmation", "Voulez-vous vraiment supprimer cette matière ?"):
+        # Créer la ligne
+        row = TableRow(
+            self.scroll_frame,
+            data=data,
+            actions_widget=actions,
+            is_alternate=(index % 2 == 0)
+        )
+        row.pack(fill="x", pady=2)
+    
+    def _open_add_dialog(self):
+        """Ouvre le dialogue d'ajout"""
+        SubjectForm(self, self.db_manager, callback=self._load_subjects)
+    
+    def _open_edit_dialog(self, subject):
+        """Ouvre le dialogue de modification"""
+        SubjectForm(
+            self,
+            self.db_manager,
+            subject_data=subject,
+            callback=self._load_subjects
+        )
+    
+    def _delete_subject(self, subject_id):
+        """Supprime une matière"""
+        if messagebox.askyesno(
+            "Confirmation",
+            "Voulez-vous vraiment supprimer cette matière ?\nCette action est irréversible."
+        ):
             self.db_manager.delete_subject(subject_id)
-            self.load_subjects()
-
-    def perform_search(self):
-        query = self.search_entry.get()
+            self._load_subjects()
+            messagebox.showinfo("✅ Succès", "Matière supprimée avec succès.")
+    
+    def _perform_search(self, query):
+        """Effectue une recherche"""
         if query:
             results = self.db_manager.search_subjects(query)
-            self.load_subjects(results)
+            self._load_subjects(results)
         else:
-            self.load_subjects()
+            self._load_subjects()

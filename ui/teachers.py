@@ -1,58 +1,161 @@
+"""
+Page de gestion des enseignants modernisée
+Utilise les composants modernes pour un design professionnel
+"""
+
 import customtkinter as ctk
 from tkinter import messagebox
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from config.theme import ModernTheme
+from widgets.modern_components import (
+    ModernButton,
+    ModernEntry,
+    ModernLabel,
+    ModernCard,
+    SearchBar,
+    PageHeader,
+    TableHeader,
+    TableRow,
+    ActionButtons
+)
+
 
 class TeacherForm(ctk.CTkToplevel):
+    """Formulaire d'enseignant modernisé"""
+    
     def __init__(self, parent, db_manager, teacher_data=None, callback=None):
         super().__init__(parent)
+        
         self.db_manager = db_manager
         self.teacher_data = teacher_data
         self.callback = callback
-        self.title("Ajouter un Enseignant" if not teacher_data else "Modifier l'Enseignant")
-        self.geometry("500x500")
+        
+        # Configuration de la fenêtre
+        self.title("👨‍🏫 Ajouter un Enseignant" if not teacher_data else "✏️ Modifier l'Enseignant")
+        self.geometry("550x600")
         self.resizable(False, False)
         
-        # Make modal
+        # Rendre modal
         self.transient(parent)
         self.grab_set()
         
-        self.layout_widgets()
+        # Configuration du fond
+        self.configure(fg_color=(ModernTheme.BG_LIGHT, ModernTheme.BG_DARK))
+        
+        self._create_ui()
+        
         if teacher_data:
-            self.fill_fields()
-
-    def layout_widgets(self):
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=1)
-
-        # Title
-        lbl_title = ctk.CTkLabel(self, text="Informations de l'enseignant", font=("Arial", 20, "bold"))
-        lbl_title.grid(row=0, column=0, columnspan=2, pady=20)
-
-        # Fields
-        self.nom = self.create_entry("Nom:", 1)
-        self.prenom = self.create_entry("Prénom:", 2)
-        self.matiere = self.create_entry("Matière:", 3)
-        self.tel = self.create_entry("Téléphone:", 4)
-        self.salaire_horaire = self.create_entry("Salaire Horaire (MAD):", 5)
-
-        # Save Button
-        btn_save = ctk.CTkButton(self, text="Enregistrer", command=self.save_teacher)
-        btn_save.grid(row=6, column=0, columnspan=2, pady=30, padx=20, sticky="ew")
-
-    def create_entry(self, label_text, row):
-        ctk.CTkLabel(self, text=label_text).grid(row=row, column=0, padx=20, pady=10, sticky="w")
-        entry = ctk.CTkEntry(self)
-        entry.grid(row=row, column=1, padx=20, pady=10, sticky="ew")
-        return entry
-
-    def fill_fields(self):
-        # teacher_data structure: (id, nom, prenom, matiere, tel, salaire_horaire)
+            self._fill_fields()
+        
+        # Centrer la fenêtre
+        self._center_window()
+    
+    def _center_window(self):
+        """Centre la fenêtre sur l'écran"""
+        self.update_idletasks()
+        width = self.winfo_width()
+        height = self.winfo_height()
+        x = (self.winfo_screenwidth() // 2) - (width // 2)
+        y = (self.winfo_screenheight() // 2) - (height // 2)
+        self.geometry(f"{width}x{height}+{x}+{y}")
+    
+    def _create_ui(self):
+        """Crée l'interface du formulaire"""
+        # Container principal
+        main_container = ctk.CTkFrame(self, fg_color="transparent")
+        main_container.pack(fill="both", expand=True, padx=30, pady=30)
+        
+        # En-tête
+        header = ModernLabel(
+            main_container,
+            text="👨‍🏫 Informations de l'enseignant",
+            style='heading'
+        )
+        header.pack(pady=(0, 25))
+        
+        # Carte de formulaire
+        form_card = ModernCard(main_container)
+        form_card.pack(fill="both", expand=True)
+        
+        form_content = ctk.CTkFrame(form_card, fg_color="transparent")
+        form_content.pack(fill="both", expand=True, padx=25, pady=25)
+        
+        # Grille pour les champs
+        form_content.grid_columnconfigure(1, weight=1)
+        
+        # Nom
+        self._create_field(form_content, "Nom *", 0)
+        self.nom = ModernEntry(form_content, placeholder="Ex: Bennani")
+        self.nom.grid(row=0, column=1, pady=10, sticky="ew")
+        
+        # Prénom
+        self._create_field(form_content, "Prénom *", 1)
+        self.prenom = ModernEntry(form_content, placeholder="Ex: Fatima")
+        self.prenom.grid(row=1, column=1, pady=10, sticky="ew")
+        
+        # Matière
+        self._create_field(form_content, "Matière", 2)
+        self.matiere = ModernEntry(form_content, placeholder="Ex: Mathématiques")
+        self.matiere.grid(row=2, column=1, pady=10, sticky="ew")
+        
+        # Téléphone
+        self._create_field(form_content, "Téléphone", 3)
+        self.tel = ModernEntry(form_content, placeholder="Ex: 0612345678")
+        self.tel.grid(row=3, column=1, pady=10, sticky="ew")
+        
+        # Salaire horaire
+        self._create_field(form_content, "Salaire Horaire (DH)", 4)
+        self.salaire_horaire = ModernEntry(form_content, placeholder="Ex: 150")
+        self.salaire_horaire.grid(row=4, column=1, pady=10, sticky="ew")
+        
+        # Note
+        note_label = ModernLabel(
+            form_content,
+            text="* Champs obligatoires",
+            style='small'
+        )
+        note_label.grid(row=5, column=0, columnspan=2, pady=(15, 5), sticky="w")
+        
+        # Boutons d'action
+        buttons_frame = ctk.CTkFrame(main_container, fg_color="transparent")
+        buttons_frame.pack(fill="x", pady=(20, 0))
+        
+        cancel_btn = ModernButton(
+            buttons_frame,
+            text="Annuler",
+            icon="❌",
+            style='outline',
+            command=self.destroy
+        )
+        cancel_btn.pack(side="right", padx=(10, 0))
+        
+        save_btn = ModernButton(
+            buttons_frame,
+            text="Enregistrer",
+            icon="💾",
+            style='success',
+            command=self._save_teacher
+        )
+        save_btn.pack(side="right")
+    
+    def _create_field(self, parent, text, row):
+        """Crée un label de champ"""
+        label = ModernLabel(parent, text=text, style='normal')
+        label.grid(row=row, column=0, padx=(0, 15), pady=10, sticky="w")
+    
+    def _fill_fields(self):
+        """Remplit les champs avec les données existantes"""
         self.nom.insert(0, self.teacher_data[1])
         self.prenom.insert(0, self.teacher_data[2])
         self.matiere.insert(0, self.teacher_data[3] or "")
         self.tel.insert(0, self.teacher_data[4] or "")
         self.salaire_horaire.insert(0, str(self.teacher_data[5]) if self.teacher_data[5] else "")
-
-    def save_teacher(self):
+    
+    def _save_teacher(self):
+        """Sauvegarde l'enseignant"""
         data = {
             "nom": self.nom.get(),
             "prenom": self.prenom.get(),
@@ -77,10 +180,10 @@ class TeacherForm(ctk.CTkToplevel):
 
         if self.teacher_data:
             self.db_manager.update_teacher(self.teacher_data[0], **data)
-            messagebox.showinfo("Succès", "Enseignant modifié avec succès.")
+            messagebox.showinfo("✅ Succès", "Enseignant modifié avec succès.")
         else:
             self.db_manager.add_teacher(**data)
-            messagebox.showinfo("Succès", "Enseignant ajouté avec succès.")
+            messagebox.showinfo("✅ Succès", "Enseignant ajouté avec succès.")
         
         if self.callback:
             self.callback()
@@ -88,105 +191,138 @@ class TeacherForm(ctk.CTkToplevel):
 
 
 class TeachersPage(ctk.CTkFrame):
+    """Page de gestion des enseignants modernisée"""
+    
     def __init__(self, parent, db_manager):
         super().__init__(parent, fg_color="transparent")
+        
         self.db_manager = db_manager
+        
+        # Configuration de la grille
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(2, weight=1)
-
-        # --- Header ---
-        self.header_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.header_frame.grid(row=0, column=0, sticky="ew", padx=20, pady=10)
         
-        title = ctk.CTkLabel(self.header_frame, text="Gestion des Enseignants", font=("Arial", 24, "bold"))
-        title.pack(side="left")
-
-        self.btn_add = ctk.CTkButton(self.header_frame, text="+ Nouvel Enseignant", command=self.open_add_dialog)
-        self.btn_add.pack(side="right")
-
-        # --- Search Bar ---
-        self.search_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.search_frame.grid(row=1, column=0, sticky="ew", padx=20, pady=(0, 10))
+        self._create_ui()
+        self._load_teachers()
+    
+    def _create_ui(self):
+        """Crée l'interface utilisateur"""
+        # En-tête de page
+        header = PageHeader(
+            self,
+            title="👨‍🏫 Gestion des Enseignants",
+            subtitle="Gérez votre équipe pédagogique",
+            add_button_text="Nouvel Enseignant",
+            add_callback=self._open_add_dialog
+        )
+        header.grid(row=0, column=0, sticky="ew", pady=(0, 20))
         
-        self.search_entry = ctk.CTkEntry(self.search_frame, placeholder_text="Rechercher un enseignant...", width=300)
-        self.search_entry.pack(side="left", padx=(0, 10))
+        # Barre de recherche
+        search_bar = SearchBar(
+            self,
+            placeholder="Rechercher un enseignant par nom, prénom ou matière...",
+            search_callback=self._perform_search,
+            refresh_callback=self._load_teachers
+        )
+        search_bar.grid(row=1, column=0, sticky="ew", pady=(0, 15))
         
-        self.btn_search = ctk.CTkButton(self.search_frame, text="Rechercher", width=100, command=self.perform_search)
-        self.btn_search.pack(side="left")
+        # Carte conteneur pour le tableau
+        table_card = ModernCard(self)
+        table_card.grid(row=2, column=0, sticky="nsew")
+        table_card.grid_columnconfigure(0, weight=1)
+        table_card.grid_rowconfigure(1, weight=1)
         
-        self.btn_reload = ctk.CTkButton(self.search_frame, text="↻", width=40, command=self.load_teachers)
-        self.btn_reload.pack(side="left", padx=10)
-
-        # --- Table Header ---
-        self.table_header = ctk.CTkFrame(self, height=40)
-        self.table_header.grid(row=2, column=0, sticky="new", padx=20, pady=(10,0))
-        self.table_header.grid_columnconfigure((0,1,2,3,4), weight=1)
-        self.table_header.grid_columnconfigure(5, weight=0, minsize=150)
+        # En-tête du tableau
+        headers = TableHeader(
+            table_card,
+            columns=["Nom", "Prénom", "Matière", "Téléphone", "Salaire/h", "Actions"]
+        )
+        headers.grid(row=0, column=0, sticky="ew", padx=20, pady=(20, 0))
         
-        headers = ["Nom", "Prénom", "Matière", "Téléphone", "Salaire/h", "Actions"]
-        for i, h in enumerate(headers):
-            ctk.CTkLabel(self.table_header, text=h, font=("Arial", 12, "bold")).grid(row=0, column=i, padx=5, pady=5)
-
-        self.scroll_frame = ctk.CTkScrollableFrame(self)
-        self.scroll_frame.grid(row=3, column=0, sticky="nsew", padx=20, pady=(0, 20))
-        self.scroll_frame.grid_columnconfigure((0,1,2,3,4), weight=1)
-        self.scroll_frame.grid_columnconfigure(5, weight=0, minsize=150)
-
-        self.load_teachers()
-
-    def load_teachers(self, teachers=None):
-        # Clear existing rows
+        # Frame scrollable pour les données
+        self.scroll_frame = ctk.CTkScrollableFrame(
+            table_card,
+            fg_color="transparent"
+        )
+        self.scroll_frame.grid(row=1, column=0, sticky="nsew", padx=20, pady=(10, 20))
+        self.scroll_frame.grid_columnconfigure(0, weight=1)
+    
+    def _load_teachers(self, teachers=None):
+        """Charge et affiche les enseignants"""
+        # Nettoyer le contenu existant
         for widget in self.scroll_frame.winfo_children():
             widget.destroy()
-
+        
         if teachers is None:
             teachers = self.db_manager.get_all_teachers()
-
+        
+        if not teachers:
+            no_data = ModernLabel(
+                self.scroll_frame,
+                text="Aucun enseignant trouvé",
+                style='secondary'
+            )
+            no_data.pack(pady=40)
+            return
+        
+        # Créer les lignes du tableau
         for i, teacher in enumerate(teachers):
-            self.create_row(i, teacher)
-
-    def create_row(self, index, teacher):
-        # teacher: (id, nom, prenom, matiere, tel, salaire_horaire)
-        row_frame = ctk.CTkFrame(self.scroll_frame, fg_color="transparent")
-        row_frame.grid(row=index, column=0, columnspan=6, sticky="ew", pady=2)
-        row_frame.grid_columnconfigure((0,1,2,3,4), weight=1)
-        row_frame.grid_columnconfigure(5, weight=0, minsize=150)
-
-        ctk.CTkLabel(row_frame, text=teacher[1]).grid(row=0, column=0)
-        ctk.CTkLabel(row_frame, text=teacher[2]).grid(row=0, column=1)
-        ctk.CTkLabel(row_frame, text=teacher[3] or "-").grid(row=0, column=2)
-        ctk.CTkLabel(row_frame, text=teacher[4] or "-").grid(row=0, column=3)
-        ctk.CTkLabel(row_frame, text=f"{teacher[5]} MAD" if teacher[5] else "-").grid(row=0, column=4)
-
-        # Actions
-        actions_frame = ctk.CTkFrame(row_frame, fg_color="transparent")
-        actions_frame.grid(row=0, column=5)
+            self._create_teacher_row(teacher, i)
+    
+    def _create_teacher_row(self, teacher, index):
+        """Crée une ligne pour un enseignant"""
+        # Boutons d'action
+        actions = ActionButtons(
+            self.scroll_frame,
+            on_edit=lambda t=teacher: self._open_edit_dialog(t),
+            on_delete=lambda id=teacher[0]: self._delete_teacher(id)
+        )
         
-        btn_edit = ctk.CTkButton(actions_frame, text="✎", width=30, height=30, 
-                                 fg_color="#F39C12", hover_color="#D35400",
-                                 command=lambda t=teacher: self.open_edit_dialog(t))
-        btn_edit.pack(side="left", padx=2)
+        # Données de la ligne
+        data = [
+            teacher[1],  # Nom
+            teacher[2],  # Prénom
+            teacher[3] or "-",  # Matière
+            teacher[4] or "-",  # Téléphone
+            f"{teacher[5]} DH" if teacher[5] else "-",  # Salaire
+        ]
         
-        btn_del = ctk.CTkButton(actions_frame, text="🗑", width=30, height=30, 
-                                fg_color="#E74C3C", hover_color="#C0392B",
-                                command=lambda id=teacher[0]: self.delete_teacher(id))
-        btn_del.pack(side="left", padx=2)
-
-    def open_add_dialog(self):
-        TeacherForm(self, self.db_manager, callback=self.load_teachers)
-
-    def open_edit_dialog(self, teacher):
-        TeacherForm(self, self.db_manager, teacher_data=teacher, callback=self.load_teachers)
-
-    def delete_teacher(self, teacher_id):
-        if messagebox.askyesno("Confirmation", "Voulez-vous vraiment supprimer cet enseignant ?"):
+        # Créer la ligne
+        row = TableRow(
+            self.scroll_frame,
+            data=data,
+            actions_widget=actions,
+            is_alternate=(index % 2 == 0)
+        )
+        row.pack(fill="x", pady=2)
+    
+    def _open_add_dialog(self):
+        """Ouvre le dialogue d'ajout"""
+        TeacherForm(self, self.db_manager, callback=self._load_teachers)
+    
+    def _open_edit_dialog(self, teacher):
+        """Ouvre le dialogue de modification"""
+        TeacherForm(
+            self,
+            self.db_manager,
+            teacher_data=teacher,
+            callback=self._load_teachers
+        )
+    
+    def _delete_teacher(self, teacher_id):
+        """Supprime un enseignant"""
+        if messagebox.askyesno(
+            "Confirmation",
+            "Voulez-vous vraiment supprimer cet enseignant ?\nCette action est irréversible."
+        ):
             self.db_manager.delete_teacher(teacher_id)
-            self.load_teachers()
-
-    def perform_search(self):
-        query = self.search_entry.get()
+            self._load_teachers()
+            messagebox.showinfo("✅ Succès", "Enseignant supprimé avec succès.")
+    
+    def _perform_search(self, query):
+        """Effectue une recherche"""
         if query:
             results = self.db_manager.search_teachers(query)
-            self.load_teachers(results)
+            self._load_teachers(results)
         else:
-            self.load_teachers()
+            self._load_teachers()
