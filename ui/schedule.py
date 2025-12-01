@@ -23,7 +23,7 @@ class ScheduleForm(ctk.CTkToplevel):
         self.callback = callback
         
         self.title("📅 Créer une Séance" if not schedule_data else "✏️ Modifier la Séance")
-        self.geometry("600x750")
+        self.geometry("600x820")
         self.resizable(False, False)
         
         self.transient(parent)
@@ -58,7 +58,7 @@ class ScheduleForm(ctk.CTkToplevel):
         
         # SECTION 1: Temporel
         time_card = ModernCard(main)
-        time_card.pack(fill="x", pady=(0, 15))
+        time_card.pack(fill="x", pady=(0, 20))
         
         time_content = ctk.CTkFrame(time_card, fg_color="transparent")
         time_content.pack(fill="both", padx=25, pady=25)
@@ -69,14 +69,14 @@ class ScheduleForm(ctk.CTkToplevel):
         ModernLabel(time_content, text="Jour *", style='normal').pack(anchor="w", pady=(0, 5))
         jours = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"]
         self.jour_combo = ModernComboBox(time_content, values=jours)
-        self.jour_combo.pack(fill="x", pady=(0, 15))
+        self.jour_combo.pack(fill="x", pady=(0, 20))
         
         # Période
-        ModernLabel(time_content, text="Période *", style='normal').pack(anchor="w", pady=(0, 5))
+        ModernLabel(time_content, text="Période *", style='normal').pack(anchor="w", pady=(0, 8))
         self.periode_var = ctk.StringVar(value="Matin")
         
         periode_frame = ctk.CTkFrame(time_content, fg_color="transparent")
-        periode_frame.pack(fill="x", pady=(0, 15))
+        periode_frame.pack(fill="x", pady=(0, 20))
         
         for periode in ["Matin", "Après-midi", "Soir"]:
             rb = ctk.CTkRadioButton(
@@ -87,7 +87,7 @@ class ScheduleForm(ctk.CTkToplevel):
                 fg_color=ModernTheme.PRIMARY,
                 hover_color=ModernTheme.PRIMARY_HOVER
             )
-            rb.pack(side="left", padx=(0, 20))
+            rb.pack(side="left", padx=(0, 25))
         
         # Horaires
         ModernLabel(time_content, text="Horaire *", style='normal').pack(anchor="w", pady=(0, 5))
@@ -104,7 +104,7 @@ class ScheduleForm(ctk.CTkToplevel):
         
         # SECTION 2: Assignations
         assign_card = ModernCard(main)
-        assign_card.pack(fill="x", pady=(0, 15))
+        assign_card.pack(fill="x", pady=(0, 20))
         
         assign_content = ctk.CTkFrame(assign_card, fg_color="transparent")
         assign_content.pack(fill="both", padx=25, pady=25)

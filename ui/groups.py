@@ -166,8 +166,12 @@ class GroupForm(ctk.CTkToplevel):
                 
                 if details[3]:  # niveau
                     self.niveau_combo.set(details[3])
-                    # Charger les élèves disponibles pour ce niveau
-                    self._update_student_list(details[3])
+                
+        # IMPORTANT: Charger la liste élèves APRÈS avoir set le niveau
+        if self.group_data and hasattr(self, 'student_combo'):
+            niveau = self.niveau_combo.get()
+            if niveau:
+                self._update_student_list(niveau)
     
     def _on_niveau_change(self, niveau):
         """Callback quand le niveau change - met à jour la liste des élèves"""
@@ -179,30 +183,33 @@ class GroupForm(ctk.CTkToplevel):
         if not hasattr(self, 'student_combo'):
             return
         
-        # Récupérer tous les élèves
-        all_students = self.db_manager.get_all_students()
+        # Récupérer tous les élèves DIRECTEMENT de la DB
+        all_students = self.db_manager.get_all_eleves()
         
         # Filtrer par niveau/classe
-        # Format élève: (id, nom, prenom, tel, adresse, ..., filiere, classe)
+        # Format élève DB: (id, nom, prenom, telephone, adresse, date_naissance, 
+        #                     date_inscription, created_at, updated_at, filiere, classe)
+        # Index 10 = classe
         filtered_students = []
         for s in all_students:
-            # s[10] = classe (ex: "1ère Année Bac", "Terminale", etc.)
-            classe = s[10] if len(s) > 10 else ""
+            classe = str(s[10]) if len(s) > 10 and s[10] else ""
             
-            # Correspondance niveau groupe <-> classe élève
+            # Correspondance niveau groupe <-> classe élève (plus flexible)
             match = False
-            if niveau == "2nde" and "2" in classe.lower():
-                match = True
-            elif niveau == "1ère" and ("1" in classe.lower() or "premi" in classe.lower()):
-                match = True
-            elif niveau == "Terminale" and ("term" in classe.lower() or "bac" in classe.lower()):
-                match = True
-            elif niveau == "Bac+1" and ("bac+1" in classe.lower() or "1ère année" in classe.lower()):
-                match = True
-            elif niveau == "Bac+2" and ("bac+2" in classe.lower() or "2ème année" in classe.lower()):
-                match = True
+            classe_lower = classe.lower()
+            
+            if niveau == "2nde":
+                match = "2" in classe_lower or "seconde" in classe_lower or "collège" in classe_lower
+            elif niveau == "1ère":
+                match = "1" in classe_lower or "premi" in classe_lower or "lycée" in classe_lower
+            elif niveau == "Terminale":
+                match = "term" in classe_lower or "bac" in classe_lower or "supérieur" in classe_lower
+            elif niveau == "Bac+1":
+                match = "bac+1" in classe_lower or "supérieur" in classe_lower or "licence" in classe_lower
+            elif niveau == "Bac+2":
+                match = "bac+2" in classe_lower or "supérieur" in classe_lower or "master" in classe_lower
             elif niveau == "Autre" or not niveau:
-                match = True  # Afficher tous si "Autre" ou pas de niveau
+                match = True  # Afficher tous
             
             if match:
                 filtered_students.append(s)

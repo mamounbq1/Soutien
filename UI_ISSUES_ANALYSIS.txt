@@ -1,0 +1,43 @@
+═══════════════════════════════════════════════════════════════
+🔍 ANALYSE DES PROBLÈMES UI
+═══════════════════════════════════════════════════════════════
+
+PROBLÈME 1: Fenêtre "Créer une Séance" mal organisée
+────────────────────────────────────────────────────────────────
+SYMPTÔMES:
+- Layout trop serré (600x750)
+- Sections pas assez espacées
+- Radio buttons mal alignés
+
+CAUSES:
+- Padding insuffisant entre sections
+- Fenêtre trop petite pour le contenu
+- Pas assez d'espace vertical
+
+SOLUTION:
+- Augmenter hauteur: 600x750 → 600x800
+- Augmenter padding entre sections: 15 → 20
+- Améliorer espacement radio buttons
+
+
+PROBLÈME 2: Élèves ne s'affichent pas dans "Modifier le Groupe"
+────────────────────────────────────────────────────────────────
+SYMPTÔMES:
+- ComboBox montre "Sélectionnez un niveau d'abord"
+- Liste élèves vide lors de l'édition
+- Impossible d'ajouter des élèves
+
+CAUSES IDENTIFIÉES:
+1. _update_student_list() utilise get_all_students() (mauvaise méthode)
+   → Doit utiliser get_all_eleves() pour accès direct DB
+   
+2. Le filtre niveau ne fonctionne pas correctement
+   → s[10] = 'classe' mais correspondance avec niveau groupe incorrecte
+   
+3. _load_group_students() appelé AVANT _update_student_list()
+   → ComboBox reste vide car pas de niveau chargé initialement
+
+SOLUTION:
+1. Changer get_all_students() → get_all_eleves()
+2. Améliorer logique de filtrage niveau/classe
+3. Appeler _update_student_list() DANS _fill_fields() APRÈS set niveau
