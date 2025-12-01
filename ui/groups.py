@@ -117,7 +117,7 @@ class GroupForm(ctk.CTkToplevel):
             self.students_scroll = ctk.CTkScrollableFrame(
                 students_content,
                 height=150,
-                fg_color=(ModernTheme.TABLE_ALT_LIGHT, ModernTheme.TABLE_ALT_DARK)
+                fg_color=(ModernTheme.BG_CARD_LIGHT, ModernTheme.BG_CARD_DARK)
             )
             self.students_scroll.pack(fill="both", expand=True)
             self.students_scroll.grid_columnconfigure(0, weight=1)

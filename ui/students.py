@@ -162,7 +162,8 @@ class StudentForm(ctk.CTkToplevel):
         # Indices: 0=id, 1=nom, 2=prenom, 3=tel, 4=adresse, ..., 10=classe (shown as niveau)
         self.nom.insert(0, self.student_data[1])
         self.prenom.insert(0, self.student_data[2])
-        self.niveau.insert(0, self.student_data[10] if len(self.student_data) > 10 else "")
+        # ComboBox uses .set() not .insert()
+        self.niveau.set(self.student_data[10] if len(self.student_data) > 10 and self.student_data[10] else "")
         self.tel.insert(0, self.student_data[3] or "")
         
         # Extraire tel parent depuis adresse
