@@ -7,11 +7,14 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+.pytest_cache/
 
 # Database
 *.db
 *.sqlite
 *.sqlite3
+database/backups/
+database/*_backup_*.db
 
 # Drafts (auto-save)
 database/drafts/
@@ -36,5 +39,12 @@ ENV/
 *.log
 
 # Outputs
-outputs/
+outputs/*.pdf
+outputs/*.xlsx
 exports/
+
+# Temporary files
+*_TEMP.txt
+*_temp.txt
+CLEANUP_*.txt
+*_ANALYSIS.txt
