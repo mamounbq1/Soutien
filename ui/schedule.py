@@ -23,8 +23,9 @@ class ScheduleForm(ctk.CTkToplevel):
         self.callback = callback
         
         self.title("📅 Créer une Séance" if not schedule_data else "✏️ Modifier la Séance")
-        self.geometry("600x820")
-        self.resizable(False, False)
+        self.geometry("650x700")
+        self.resizable(True, True)
+        self.minsize(600, 600)
         
         self.transient(parent)
         self.grab_set()
@@ -51,17 +52,27 @@ class ScheduleForm(ctk.CTkToplevel):
         self.rooms = self.db_manager.get_available_rooms()
     
     def _create_ui(self):
-        main = ctk.CTkFrame(self, fg_color="transparent")
-        main.pack(fill="both", expand=True, padx=30, pady=30)
+        # Container principal avec header fixe
+        header_frame = ctk.CTkFrame(self, fg_color="transparent")
+        header_frame.pack(fill="x", padx=30, pady=(20, 0))
         
-        ModernLabel(main, text="📅 Créer une séance", style='heading').pack(pady=(0, 25))
+        ModernLabel(header_frame, text="📅 Créer une séance", style='heading').pack(pady=(0, 15))
+        
+        # Frame scrollable pour tout le contenu
+        main = ctk.CTkScrollableFrame(
+            self,
+            fg_color="transparent",
+            scrollbar_button_color=ModernTheme.PRIMARY,
+            scrollbar_button_hover_color=ModernTheme.PRIMARY_HOVER
+        )
+        main.pack(fill="both", expand=True, padx=30, pady=(10, 20))
         
         # SECTION 1: Temporel
         time_card = ModernCard(main)
-        time_card.pack(fill="x", pady=(0, 20))
+        time_card.pack(fill="x", pady=(0, 15))
         
         time_content = ctk.CTkFrame(time_card, fg_color="transparent")
-        time_content.pack(fill="both", padx=25, pady=25)
+        time_content.pack(fill="both", padx=20, pady=20)
         
         ModernLabel(time_content, text="⏰ Informations temporelles", style='subheading').pack(anchor="w", pady=(0, 15))
         
@@ -104,10 +115,10 @@ class ScheduleForm(ctk.CTkToplevel):
         
         # SECTION 2: Assignations
         assign_card = ModernCard(main)
-        assign_card.pack(fill="x", pady=(0, 20))
+        assign_card.pack(fill="x", pady=(0, 15))
         
         assign_content = ctk.CTkFrame(assign_card, fg_color="transparent")
-        assign_content.pack(fill="both", padx=25, pady=25)
+        assign_content.pack(fill="both", padx=20, pady=20)
         
         ModernLabel(assign_content, text="👥 Assignations", style='subheading').pack(anchor="w", pady=(0, 15))
         
@@ -131,11 +142,11 @@ class ScheduleForm(ctk.CTkToplevel):
         
         # Note
         note = ModernLabel(main, text="* Champs obligatoires | Les conflits sont vérifiés automatiquement", style='small')
-        note.pack(anchor="w", pady=(10, 0))
+        note.pack(anchor="w", pady=(8, 0))
         
         # Boutons
         btns = ctk.CTkFrame(main, fg_color="transparent")
-        btns.pack(fill="x", pady=(20, 0))
+        btns.pack(fill="x", pady=(15, 10))
         
         ModernButton(btns, "Annuler", "❌", 'outline', command=self.destroy).pack(side="right", padx=(10, 0))
         ModernButton(btns, "Enregistrer", "💾", 'success', command=self._save).pack(side="right")
