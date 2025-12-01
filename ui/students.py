@@ -323,7 +323,7 @@ class StudentsPage(ctk.CTkFrame):
         self.table.clear_rows()
         
         if students is None:
-            students = self.db_manager.get_all_students()
+            students = self.db_manager.get_all_eleves()  # DIRECT - pas de conversion
         
         if not students:
             # Message si aucun élève
@@ -432,7 +432,7 @@ class StudentsPage(ctk.CTkFrame):
         if query:
             results = self.db_manager.search_students(query)
         else:
-            results = self.db_manager.get_all_students()
+            results = self.db_manager.get_all_eleves()  # DIRECT - pas de conversion
         
         # Appliquer le filtre de niveau
         niveau_filter = self.filter_niveau.get()

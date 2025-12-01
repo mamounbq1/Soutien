@@ -46,13 +46,13 @@ class LoginWindow(ctk.CTkToplevel):
         self.username_entry.focus()
     
     def _create_ui(self):
-        """Crée l'interface de connexion"""
-        # Container principal avec scroll au cas où
-        main_container = ctk.CTkScrollableFrame(
+        """Crée l'interface de connexion CENTRÉE"""
+        # Container principal CENTRÉ
+        main_container = ctk.CTkFrame(
             self,
             fg_color="transparent"
         )
-        main_container.pack(fill="both", expand=True, padx=40, pady=40)
+        main_container.place(relx=0.5, rely=0.5, anchor="center")  # CENTRAGE ABSOLU
         
         # Logo/Icône
         logo_label = ctk.CTkLabel(
