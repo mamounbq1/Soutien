@@ -123,114 +123,13 @@ class ModernDashboard(ctk.CTkFrame):
         date_label.pack(side="right", padx=(0, 8))
     
     def _create_stat_cards(self):
-        """Crée les cartes de statistiques avec lazy loading (OPTIMISÉ)"""
-        # Stocker les références aux cartes pour mise à jour ultérieure
-        self.stat_cards = {}
-        self.stat_value_labels = {}
-        
-        # Configuration des cartes (sans valeurs initialement)
-        stats_config = [
-            ("Total Élèves", ModernTheme.ICONS['students'], 0),
-            ("Total Enseignants", ModernTheme.ICONS['teachers'], 1),
-            ("Total Groupes", ModernTheme.ICONS['groups'], 2),
-            ("Total Matières", ModernTheme.ICONS['subjects'], 3),
-        ]
-        
-        # Créer les cartes avec placeholder "..."
-        for title, icon, col in stats_config:
-            color_scheme = ModernTheme.get_stat_color(col)
-            card = self._create_stat_card_placeholder(
-                self,
-                title=title,
-                icon=icon,
-                color_scheme=color_scheme
-            )
-            card.grid(row=1, column=col, padx=8, pady=8, sticky="ew")
-            self.stat_cards[title] = card
-        
-        # Cartes de la deuxième ligne (aussi avec placeholders)
-        revenue_card = self._create_stat_card_placeholder(
-            self,
-            title="Revenus ce mois",
-            icon=ModernTheme.ICONS['payments'],
-            color_scheme=ModernTheme.get_stat_color(4)
-        )
-        revenue_card.grid(row=2, column=0, columnspan=2, padx=8, pady=8, sticky="ew")
-        self.stat_cards["Revenus ce mois"] = revenue_card
-        
-        payments_card = self._create_stat_card_placeholder(
-            self,
-            title="Total Paiements",
-            icon="📄",
-            color_scheme=ModernTheme.get_stat_color(5)
-        )
-        payments_card.grid(row=2, column=2, columnspan=2, padx=8, pady=8, sticky="ew")
-        self.stat_cards["Total Paiements"] = payments_card
-        
-        # Charger les données réelles après 50ms (asynchrone)
-        self.after(50, self._load_all_stats_async)
-    
-    def _create_stat_card_placeholder(self, master, title, icon, color_scheme):
-        """Créer une carte avec placeholder '...' pour chargement rapide"""
-        bg_color, hover_color = color_scheme
-        
-        card = ctk.CTkFrame(
-            master,
-            corner_radius=ModernTheme.BORDER_RADIUS_SMALL,
-            fg_color=bg_color,
-            height=68
-        )
-        card.grid_columnconfigure(0, weight=1)
-        
-        content_frame = ctk.CTkFrame(card, fg_color="transparent")
-        content_frame.pack(fill="both", expand=True, padx=8, pady=5)
-        
-        top_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
-        top_frame.pack(fill="x", pady=(0, 2))
-        
-        icon_label = ctk.CTkLabel(
-            top_frame,
-            text=icon,
-            font=ctk.CTkFont(size=18),
-            text_color="white"
-        )
-        icon_label.pack(side="left")
-        
-        title_label = ctk.CTkLabel(
-            content_frame,
-            text=title,
-            font=ctk.CTkFont(size=10, weight="normal"),
-            text_color="white",
-            anchor="w"
-        )
-        title_label.pack(fill="x")
-        
-        # Label de valeur avec placeholder
-        value_label = ctk.CTkLabel(
-            content_frame,
-            text="...",  # Placeholder
-            font=ctk.CTkFont(size=24, weight="bold"),
-            text_color="white",
-            anchor="w"
-        )
-        value_label.pack(fill="x", pady=(1, 0))
-        
-        # Stocker la référence au label de valeur
-        self.stat_value_labels[title] = value_label
-        
-        # Effet hover
-        card.bind("<Enter>", lambda e: card.configure(fg_color=hover_color))
-        card.bind("<Leave>", lambda e: card.configure(fg_color=bg_color))
-        
-        return card
-    
-    def _load_all_stats_async(self):
-        """Charger toutes les stats en UNE SEULE requête SQL (OPTIMISÉ)"""
+        """Crée les cartes de statistiques (CHARGEMENT IMMÉDIAT)"""
+        # Charger TOUTES les données IMMÉDIATEMENT avec 1 seule requête SQL
         try:
             conn = self.db_manager.get_connection()
             cursor = conn.cursor()
             
-            # UNE SEULE REQUÊTE pour toutes les statistiques
+            # UNE SEULE REQUÊTE pour TOUTES les stats
             cursor.execute('''
                 SELECT 
                     (SELECT COUNT(*) FROM ELEVE) as students,
@@ -243,36 +142,61 @@ class ModernDashboard(ctk.CTkFrame):
             row = cursor.fetchone()
             conn.close()
             
-            if row:
-                # Mettre à jour les cartes avec les valeurs réelles
-                self._update_stat_value("Total Élèves", str(row[0]))
-                self._update_stat_value("Total Enseignants", str(row[1]))
-                self._update_stat_value("Total Groupes", str(row[2]))
-                self._update_stat_value("Total Matières", str(row[3]))
-                self._update_stat_value("Total Paiements", str(row[4]))
-            
-            # Charger les revenus séparément (calcul plus complexe)
-            self.after(100, self._load_revenue_async)
+            students = row[0] if row else 0
+            teachers = row[1] if row else 0
+            groups = row[2] if row else 0
+            subjects = row[3] if row else 0
+            payments = row[4] if row else 0
             
         except Exception as e:
             print(f"Erreur chargement stats: {e}")
-            # En cas d'erreur, afficher "0" au lieu de "..."
-            for title in self.stat_value_labels:
-                self._update_stat_value(title, "0")
-    
-    def _load_revenue_async(self):
-        """Charger les revenus séparément"""
+            students = teachers = groups = subjects = payments = 0
+        
+        # Charger les revenus
         try:
             revenue = self._get_monthly_revenue()
-            self._update_stat_value("Revenus ce mois", f"{revenue} DH")
-        except Exception as e:
-            print(f"Erreur chargement revenus: {e}")
-            self._update_stat_value("Revenus ce mois", "0 DH")
+        except:
+            revenue = 0
+        
+        # Créer les cartes avec les VRAIES valeurs
+        stats = [
+            ("Total Élèves", str(students), ModernTheme.ICONS['students'], 0),
+            ("Total Enseignants", str(teachers), ModernTheme.ICONS['teachers'], 1),
+            ("Total Groupes", str(groups), ModernTheme.ICONS['groups'], 2),
+            ("Total Matières", str(subjects), ModernTheme.ICONS['subjects'], 3),
+        ]
+        
+        for title, value, icon, col in stats:
+            color_scheme = ModernTheme.get_stat_color(col)
+            card = ModernStatCard(
+                self,
+                title=title,
+                value=value,
+                icon=icon,
+                color_scheme=color_scheme
+            )
+            card.grid(row=1, column=col, padx=8, pady=8, sticky="ew")
+        
+        # Cartes de la deuxième ligne
+        revenue_card = ModernStatCard(
+            self,
+            title="Revenus ce mois",
+            value=f"{revenue} DH",
+            icon=ModernTheme.ICONS['payments'],
+            color_scheme=ModernTheme.get_stat_color(4)
+        )
+        revenue_card.grid(row=2, column=0, columnspan=2, padx=8, pady=8, sticky="ew")
+        
+        payments_card = ModernStatCard(
+            self,
+            title="Total Paiements",
+            value=str(payments),
+            icon="📄",
+            color_scheme=ModernTheme.get_stat_color(5)
+        )
+        payments_card.grid(row=2, column=2, columnspan=2, padx=8, pady=8, sticky="ew")
     
-    def _update_stat_value(self, title, value):
-        """Mettre à jour la valeur d'une carte de statistique"""
-        if title in self.stat_value_labels:
-            self.stat_value_labels[title].configure(text=str(value))
+
     
     def _create_recent_payments_section(self):
         """Crée la section des paiements récents"""
@@ -327,17 +251,8 @@ class ModernDashboard(ctk.CTkFrame):
         self.payments_scroll.grid_columnconfigure(3, weight=1)  # Date
         self.payments_scroll.grid_columnconfigure(4, weight=1)  # Actions
         
-        # Afficher un message "Chargement..." initialement
-        loading_label = ctk.CTkLabel(
-            self.payments_scroll,
-            text="⏳ Chargement des paiements...",
-            font=ctk.CTkFont(size=12),
-            text_color=(ModernTheme.TEXT_SECONDARY_LIGHT, ModernTheme.TEXT_SECONDARY_DARK)
-        )
-        loading_label.grid(row=0, column=0, columnspan=5, pady=20)
-        
-        # Charger les paiements après 200ms (asynchrone)
-        self.after(200, self._load_recent_payments)
+        # Charger les paiements IMMÉDIATEMENT (pas de délai)
+        self._load_recent_payments()
     
     def _load_recent_payments(self):
         """Charge et affiche les paiements récents"""
