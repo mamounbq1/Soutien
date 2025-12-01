@@ -9,11 +9,15 @@ from ui.modern_dashboard import ModernDashboard
 from ui.students import StudentsPage
 from ui.teachers import TeachersPage
 from ui.subjects import SubjectsPage
+from ui.rooms import RoomsPage
 from ui.groups import GroupsPage
+from ui.schedule import SchedulePage
 from ui.payments import PaymentsPage
 from ui.presence import PresencePage
-from database.db_manager import DatabaseManager
+from ui.parametres import ParametresPage
+from database.db_compatibility import DatabaseCompatibility
 from config.theme import ModernTheme
+from config.settings import AppSettings, ThemeSettings
 import os
 
 
@@ -23,22 +27,23 @@ class ModernApp(ctk.CTk):
     - Design professionnel
     - Navigation fluide
     - Thème cohérent
+    - Authentification requise
     """
     
-    def __init__(self):
+    def __init__(self, require_login=True):
         super().__init__()
         
         # Configuration de la fenêtre
-        self.title("Système de Gestion - Centre de Soutien Scolaire")
-        self.geometry("1400x800")
-        self.minsize(1200, 700)
+        self.title(AppSettings.APP_NAME)
+        self.geometry(f"{AppSettings.WINDOW_WIDTH}x{AppSettings.WINDOW_HEIGHT}")
+        self.minsize(AppSettings.WINDOW_MIN_WIDTH, AppSettings.WINDOW_MIN_HEIGHT)
         
         # Configuration du thème
-        ctk.set_appearance_mode("light")  # "light" ou "dark"
-        ctk.set_default_color_theme("blue")
+        ctk.set_appearance_mode(AppSettings.DEFAULT_THEME_MODE)
+        ctk.set_default_color_theme(AppSettings.DEFAULT_COLOR_THEME)
         
         # Initialisation de la base de données
-        self.db = DatabaseManager()
+        self.db = DatabaseCompatibility()
         
         # Configuration du layout principal
         self.grid_columnconfigure(1, weight=1)
@@ -47,11 +52,17 @@ class ModernApp(ctk.CTk):
         # Configuration du fond de l'application
         self.configure(fg_color=(ModernTheme.BG_LIGHT, ModernTheme.BG_DARK))
         
-        # Créer l'interface
-        self._create_ui()
+        self.is_authenticated = False
         
-        # Centrer la fenêtre
-        self._center_window()
+        # Afficher le login si requis
+        if require_login:
+            self.withdraw()  # Cacher la fenêtre principale
+            # Afficher le login après que la fenêtre soit créée
+            self.after(100, self._show_login)
+        else:
+            self.is_authenticated = True
+            self._create_ui()
+            self._center_window()
     
     def _create_ui(self):
         """Crée l'interface utilisateur"""
@@ -84,6 +95,18 @@ class ModernApp(ctk.CTk):
         y = (self.winfo_screenheight() // 2) - (height // 2)
         self.geometry(f"{width}x{height}+{x}+{y}")
     
+    def _show_login(self):
+        """Affiche l'écran de connexion"""
+        from ui.login import show_login
+        show_login(self, self._on_login_success)
+    
+    def _on_login_success(self):
+        """Callback appelé après connexion réussie"""
+        self.is_authenticated = True
+        self.deiconify()  # Afficher la fenêtre principale
+        self._create_ui()
+        self._center_window()
+    
     def change_view(self, view_name):
         """
         Change la vue affichée
@@ -100,9 +123,12 @@ class ModernApp(ctk.CTk):
             "students": self.show_students,
             "teachers": self.show_teachers,
             "subjects": self.show_subjects,
+            "rooms": self.show_rooms,
             "groups": self.show_groups,
+            "schedule": self.show_schedule,
             "payments": self.show_payments,
             "presence": self.show_presence,
+            "parametres": self.show_parametres,
         }
         
         method = view_methods.get(view_name)
@@ -129,9 +155,19 @@ class ModernApp(ctk.CTk):
         self.current_frame = SubjectsPage(self.content_container, self.db)
         self.current_frame.grid(row=0, column=0, sticky="nsew", padx=25, pady=25)
     
+    def show_rooms(self):
+        """Affiche la page de gestion des salles"""
+        self.current_frame = RoomsPage(self.content_container, self.db)
+        self.current_frame.grid(row=0, column=0, sticky="nsew", padx=25, pady=25)
+    
     def show_groups(self):
         """Affiche la page de gestion des groupes"""
         self.current_frame = GroupsPage(self.content_container, self.db)
+        self.current_frame.grid(row=0, column=0, sticky="nsew", padx=25, pady=25)
+    
+    def show_schedule(self):
+        """Affiche la page de l'emploi du temps"""
+        self.current_frame = SchedulePage(self.content_container, self.db)
         self.current_frame.grid(row=0, column=0, sticky="nsew", padx=25, pady=25)
     
     def show_payments(self):
@@ -143,11 +179,21 @@ class ModernApp(ctk.CTk):
         """Affiche la page de présence"""
         self.current_frame = PresencePage(self.content_container, self.db)
         self.current_frame.grid(row=0, column=0, sticky="nsew", padx=25, pady=25)
+    
+    def show_parametres(self):
+        """Affiche la page de paramètres"""
+        self.current_frame = ParametresPage(self.content_container, self.db)
+        self.current_frame.grid(row=0, column=0, sticky="nsew", padx=25, pady=25)
 
 
-def main():
-    """Point d'entrée de l'application"""
-    app = ModernApp()
+def main(require_login=True):
+    """
+    Point d'entrée de l'application
+    
+    Args:
+        require_login: Si True, affiche l'écran de connexion
+    """
+    app = ModernApp(require_login=require_login)
     app.mainloop()
 
 

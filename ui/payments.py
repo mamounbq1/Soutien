@@ -19,10 +19,10 @@ from widgets.modern_components import (
     ModernCard,
     SearchBar,
     PageHeader,
-    TableHeader,
-    TableRow,
-    ActionButtons
+    BorderedTable
 )
+from ui.print_dialogs import PrintStudentInvoiceDialog
+from utils import center_window
 
 
 class PaymentForm(ctk.CTkToplevel):
@@ -52,16 +52,7 @@ class PaymentForm(ctk.CTkToplevel):
         self._create_ui()
         
         # Centrer la fenêtre
-        self._center_window()
-    
-    def _center_window(self):
-        """Centre la fenêtre sur l'écran"""
-        self.update_idletasks()
-        width = self.winfo_width()
-        height = self.winfo_height()
-        x = (self.winfo_screenwidth() // 2) - (width // 2)
-        y = (self.winfo_screenheight() // 2) - (height // 2)
-        self.geometry(f"{width}x{height}+{x}+{y}")
+        center_window(self)
     
     def _create_ui(self):
         """Crée l'interface du formulaire"""
@@ -211,14 +202,26 @@ class PaymentsPage(ctk.CTkFrame):
         # Statistiques
         self._create_stats_section()
         
-        # Barre de recherche
+        # Barre de recherche et bouton d'impression
+        search_container = ctk.CTkFrame(self, fg_color="transparent")
+        search_container.grid(row=2, column=0, sticky="ew", pady=(0, 15))
+        search_container.grid_columnconfigure(0, weight=1)
+        
         search_bar = SearchBar(
-            self,
+            search_container,
             placeholder="Rechercher un paiement...",
             search_callback=self._perform_search,
             refresh_callback=self._load_payments
         )
-        search_bar.grid(row=2, column=0, sticky="ew", pady=(0, 15))
+        search_bar.grid(row=0, column=0, sticky="ew", padx=(0, 10))
+        
+        ModernButton(
+            search_container,
+            text="🖨️ Facture",
+            command=self._open_print_dialog,
+            style='primary',
+            width=140
+        ).grid(row=0, column=1)
         
         # Carte conteneur pour le tableau
         table_card = ModernCard(self)
@@ -226,20 +229,13 @@ class PaymentsPage(ctk.CTkFrame):
         table_card.grid_columnconfigure(0, weight=1)
         table_card.grid_rowconfigure(1, weight=1)
         
-        # En-tête du tableau
-        headers = TableHeader(
+        # Table BorderedTable avec grille complète
+        self.table = BorderedTable(
             table_card,
-            columns=["Élève", "Montant", "Mois", "Année", "Date", "Actions"]
+            headers=["Élève", "Montant", "Mois", "Année", "Date", "Actions"],
+            column_weights=[3, 1, 1, 1, 1, 1]  # Élève, Montant, Mois, Année, Date, Actions
         )
-        headers.grid(row=0, column=0, sticky="ew", padx=20, pady=(20, 0))
-        
-        # Frame scrollable pour les données
-        self.scroll_frame = ctk.CTkScrollableFrame(
-            table_card,
-            fg_color="transparent"
-        )
-        self.scroll_frame.grid(row=1, column=0, sticky="nsew", padx=20, pady=(10, 20))
-        self.scroll_frame.grid_columnconfigure(0, weight=1)
+        self.table.grid(row=0, column=0, sticky="nsew", padx=20, pady=20)
     
     def _create_stats_section(self):
         """Crée la section des statistiques"""
@@ -308,59 +304,47 @@ class PaymentsPage(ctk.CTkFrame):
     
     def _load_payments(self, payments=None):
         """Charge et affiche les paiements"""
-        # Nettoyer le contenu existant
-        for widget in self.scroll_frame.winfo_children():
-            widget.destroy()
+        self.table.clear()
         
         if payments is None:
             payments = self.db_manager.get_all_payments()
         
         if not payments:
-            no_data = ModernLabel(
-                self.scroll_frame,
-                text="Aucun paiement trouvé",
-                style='secondary'
-            )
-            no_data.pack(pady=40)
+            self.table.add_row([{"text": "Aucun paiement trouvé", "colspan": 6, "fg": ModernTheme.TEXT_SECONDARY}])
             return
         
         # Créer les lignes du tableau
-        for i, payment in enumerate(payments):
-            self._create_payment_row(payment, i)
+        for payment in payments:
+            self._create_payment_row(payment)
     
-    def _create_payment_row(self, payment, index):
+    def _create_payment_row(self, payment):
         """Crée une ligne pour un paiement"""
         # payment: (id, student_name, montant, mois, annee, date_paiement)
         
-        # Boutons d'action (seulement delete pour les paiements)
-        actions_frame = ctk.CTkFrame(self.scroll_frame, fg_color="transparent")
-        delete_btn = ModernButton(
-            actions_frame,
-            text="",
-            icon="🗑",
-            style='danger',
-            width=35,
-            command=lambda id=payment[0]: self._delete_payment(id)
-        )
-        delete_btn.pack(side="left", padx=2)
+        def create_actions_widget(parent):
+            actions_frame = ctk.CTkFrame(parent, fg_color="transparent")
+            
+            delete_btn = ModernButton(
+                actions_frame,
+                text="Supprimer",
+                style="danger",
+                width=32, height=26,
+                command=lambda: self._delete_payment(payment[0])
+            )
+            delete_btn.pack(side="left", padx=2)
+            
+            return actions_frame
         
-        # Données de la ligne
         data = [
-            payment[1],  # Élève
-            f"{payment[2]} DH",  # Montant
-            payment[3],  # Mois
-            payment[4],  # Année
-            payment[5][:10],  # Date (juste la date, pas l'heure)
+            {"text": payment[1], "font_size": 11},  # Élève
+            {"text": f"{payment[2]} DH", "font_size": 11, "fg": ModernTheme.SUCCESS, "font_weight": "bold"},  # Montant
+            {"text": payment[3], "font_size": 11},  # Mois
+            {"text": payment[4], "font_size": 11},  # Année
+            {"text": payment[5][:10], "font_size": 10, "fg": ModernTheme.TEXT_SECONDARY},  # Date
+            create_actions_widget  # Actions
         ]
         
-        # Créer la ligne
-        row = TableRow(
-            self.scroll_frame,
-            data=data,
-            actions_widget=actions_frame,
-            is_alternate=(index % 2 == 0)
-        )
-        row.pack(fill="x", pady=2)
+        self.table.add_row(data)
     
     def _open_add_dialog(self):
         """Ouvre le dialogue d'ajout"""
@@ -381,6 +365,10 @@ class PaymentsPage(ctk.CTkFrame):
                     widget.destroy()
             self._create_stats_section()
             messagebox.showinfo("✅ Succès", "Paiement supprimé avec succès.")
+    
+    def _open_print_dialog(self):
+        """Ouvre le dialogue d'impression de facture"""
+        PrintStudentInvoiceDialog(self, self.db_manager)
     
     def _perform_search(self, query):
         """Effectue une recherche"""

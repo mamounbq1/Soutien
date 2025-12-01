@@ -1,0 +1,57 @@
+[2025-11-30 22:17:44] ============================================================
+[2025-11-30 22:17:44] DÉBUT DE LA MIGRATION V1 → V2
+[2025-11-30 22:17:44] ============================================================
+[2025-11-30 22:17:44] 
+📦 ÉTAPE 1: Création du backup...
+[2025-11-30 22:17:44] ✅ Backup créé: database/backups/app_backup_20251130_221744.db
+[2025-11-30 22:17:44] 
+🏗️ ÉTAPE 2: Création de la nouvelle structure...
+[2025-11-30 22:17:44] ✅ Nouvelle structure créée
+[2025-11-30 22:17:44] 
+🔄 ÉTAPE 3: Migration des données...
+[2025-11-30 22:17:44] 
+  📚 Migration MATIERE...
+[2025-11-30 22:17:44]     ✅ 4/4 matières migrées
+[2025-11-30 22:17:44] 
+  🏫 Migration SALLE...
+[2025-11-30 22:17:44]     ✅ 4/4 salles migrées
+[2025-11-30 22:17:44] 
+  👨‍🏫 Migration PROFESSEUR...
+[2025-11-30 22:17:44]     ✅ 4/4 professeurs migrés
+[2025-11-30 22:17:44] 
+  👨‍🎓 Migration ELEVE...
+[2025-11-30 22:17:44]     ✅ 5/5 élèves migrés
+[2025-11-30 22:17:44]     ℹ️ Note: adresse et date_naissance à renseigner manuellement
+[2025-11-30 22:17:44] 
+  👥 Migration GROUPE...
+[2025-11-30 22:17:44]     ✅ 4/4 groupes migrés
+[2025-11-30 22:17:44]     ℹ️ Note: id_prof, id_salle et horaires à renseigner
+[2025-11-30 22:17:44] 
+  📝 Migration INSCRIPTION...
+[2025-11-30 22:17:44]     ✅ 5/5 inscriptions migrées
+[2025-11-30 22:17:44]     ℹ️ Note: mensualité à renseigner pour chaque inscription
+[2025-11-30 22:17:44] 
+  📅 Migration EMPLOI_DU_TEMPS...
+[2025-11-30 22:17:44]     ✅ 4/4 séances migrées
+[2025-11-30 22:17:44] 
+  💰 Migration PAIEMENT_ELEVE...
+[2025-11-30 22:17:44]     ✅ 3/3 paiements élèves migrés
+[2025-11-30 22:17:44] 
+  💵 Initialisation PAIEMENT_PROF...
+[2025-11-30 22:17:44]     ℹ️ Table créée (données à remplir manuellement)
+[2025-11-30 22:17:44] 
+✅ Migration des données terminée avec succès!
+[2025-11-30 22:17:44] 
+🔍 ÉTAPE 4: Vérification des données...
+[2025-11-30 22:17:44]     ✅ ELEVE: 5 enregistrements
+[2025-11-30 22:17:44]     ✅ PROFESSEUR: 4 enregistrements
+[2025-11-30 22:17:44]     ✅ MATIERE: 4 enregistrements
+[2025-11-30 22:17:44]     ✅ SALLE: 4 enregistrements
+[2025-11-30 22:17:44]     ✅ GROUPE: 4 enregistrements
+[2025-11-30 22:17:44]     ✅ INSCRIPTION: 5 enregistrements
+[2025-11-30 22:17:44]     ✅ EMPLOI_DU_TEMPS: 4 enregistrements
+[2025-11-30 22:17:44]     ✅ PAIEMENT_ELEVE: 3 enregistrements
+[2025-11-30 22:17:44] 
+============================================================
+[2025-11-30 22:17:44] MIGRATION TERMINÉE
+[2025-11-30 22:17:44] ============================================================

@@ -12,6 +12,7 @@ class ModernTheme:
     # === COULEURS PRINCIPALES ===
     # Couleurs de base
     PRIMARY = "#1E88E5"          # Bleu principal moderne
+    PRIMARY_HOVER = "#1565C0"    # Bleu foncé pour hover
     PRIMARY_DARK = "#1565C0"     # Bleu foncé pour hover
     PRIMARY_LIGHT = "#42A5F5"    # Bleu clair
     
@@ -43,6 +44,11 @@ class ModernTheme:
     TEXT_PRIMARY_DARK = "#E8EAED"       # Texte principal sombre
     TEXT_SECONDARY_DARK = "#9AA0A6"     # Texte secondaire sombre
     TEXT_DISABLED_DARK = "#5F6368"      # Texte désactivé sombre
+    
+    # Alias pour compatibilité (mode par défaut = light)
+    TEXT_PRIMARY = TEXT_PRIMARY_LIGHT
+    TEXT_SECONDARY = TEXT_SECONDARY_LIGHT
+    TEXT_DISABLED = TEXT_DISABLED_LIGHT
     
     # === SIDEBAR ===
     SIDEBAR_BG_LIGHT = "#FFFFFF"
@@ -97,37 +103,38 @@ class ModernTheme:
     
     # === TYPOGRAPHIE ===
     FONT_FAMILY = "Segoe UI"
-    FONT_SIZE_SMALL = 11
-    FONT_SIZE_NORMAL = 13
-    FONT_SIZE_MEDIUM = 15
-    FONT_SIZE_LARGE = 18
-    FONT_SIZE_XLARGE = 24
-    FONT_SIZE_XXLARGE = 32
+    FONT_SIZE_SMALL = 10
+    FONT_SIZE_NORMAL = 11
+    FONT_SIZE_MEDIUM = 12
+    FONT_SIZE_LARGE = 13
+    FONT_SIZE_XLARGE = 16
+    FONT_SIZE_XXLARGE = 20
     
     # === DIMENSIONS ===
-    SIDEBAR_WIDTH = 260
-    BUTTON_HEIGHT = 40
-    INPUT_HEIGHT = 38
-    CARD_HEIGHT = 120
+    SIDEBAR_WIDTH = 180
+    BUTTON_HEIGHT = 28
+    INPUT_HEIGHT = 26
+    CARD_HEIGHT = 68
     
-    # === ICÔNES (Unicode) ===
+    # === ICÔNES (Unicode) - Modernes et professionnelles ===
     ICONS = {
-        'dashboard': '📊',
-        'students': '👨‍🎓',
-        'teachers': '👨‍🏫',
-        'subjects': '📚',
-        'groups': '👥',
-        'payments': '💰',
+        'dashboard': '◈',
+        'students': '⚲',
+        'teachers': '⚐',
+        'subjects': '◫',
+        'groups': '▣',
+        'payments': '◉',
         'presence': '✓',
-        'logout': '🚪',
-        'add': '➕',
-        'edit': '✏️',
-        'delete': '🗑️',
-        'search': '🔍',
-        'refresh': '🔄',
-        'save': '💾',
-        'cancel': '❌',
+        'logout': '⎋',
+        'add': '+',
+        'edit': '✎',
+        'delete': '✕',
+        'search': '⌕',
+        'refresh': '↻',
+        'save': '✓',
+        'cancel': '✕',
         'menu': '☰',
+        'print': '⎙',
     }
     
     @staticmethod
