@@ -14,7 +14,7 @@ from config.theme import ModernTheme
 
 
 class ModernMenuButton(ctk.CTkButton):
-    """Bouton de menu modernisé avec icône et indicateur de sélection"""
+    """Bouton de menu modernisé avec icône et indicateur de sélection - ultra compact"""
     
     def __init__(self, master, text, icon, command, **kwargs):
         self.icon = icon
@@ -26,7 +26,7 @@ class ModernMenuButton(ctk.CTkButton):
             text=f"{icon}  {text}",
             command=command,
             font=ctk.CTkFont(size=ModernTheme.FONT_SIZE_NORMAL, weight="normal"),
-            height=ModernTheme.BUTTON_HEIGHT + 5,
+            height=ModernTheme.BUTTON_HEIGHT,
             corner_radius=ModernTheme.BORDER_RADIUS_SMALL,
             fg_color="transparent",
             text_color=(ModernTheme.TEXT_PRIMARY_LIGHT, ModernTheme.TEXT_PRIMARY_DARK),
@@ -73,48 +73,48 @@ class ModernSidebar(ctk.CTkFrame):
         self.current_view = "dashboard"
         
         # Configuration de la grille
-        self.grid_rowconfigure(10, weight=1)  # Spacer pour pousser le logout en bas
+        self.grid_rowconfigure(13, weight=1)  # Spacer pour pousser le logout en bas
         
         self._create_header()
         self._create_menu_items()
         self._create_footer()
         
     def _create_header(self):
-        """Crée l'en-tête de la sidebar avec logo et titre"""
-        # Frame pour l'en-tête
+        """Crée l'en-tête de la sidebar avec logo et titre - ultra compact (25% de moins)"""
+        # Frame pour l'en-tête (hauteur réduite)
         header_frame = ctk.CTkFrame(
             self,
             fg_color="transparent",
-            height=80
+            height=55
         )
-        header_frame.grid(row=0, column=0, padx=0, pady=(20, 30), sticky="ew")
+        header_frame.grid(row=0, column=0, padx=0, pady=(12, 18), sticky="ew")
         header_frame.grid_columnconfigure(0, weight=1)
         
-        # Logo/Icône
+        # Logo/Icône (dimensions gardées, taille visuelle identique)
         logo_label = ctk.CTkLabel(
             header_frame,
             text="🎓",
-            font=ctk.CTkFont(size=40)
+            font=ctk.CTkFont(size=30)
         )
-        logo_label.grid(row=0, column=0, pady=(0, 5))
+        logo_label.grid(row=0, column=0, pady=(0, 3))
         
-        # Titre de l'application
+        # Titre de l'application (police lisible)
         title_label = ctk.CTkLabel(
             header_frame,
             text="Centre Soutien",
-            font=ctk.CTkFont(size=ModernTheme.FONT_SIZE_LARGE, weight="bold"),
+            font=ctk.CTkFont(size=13, weight="bold"),
             text_color=(ModernTheme.TEXT_PRIMARY_LIGHT, ModernTheme.TEXT_PRIMARY_DARK)
         )
         title_label.grid(row=1, column=0)
         
-        # Sous-titre
+        # Sous-titre (police lisible)
         subtitle_label = ctk.CTkLabel(
             header_frame,
             text="Gestion Éducative",
-            font=ctk.CTkFont(size=ModernTheme.FONT_SIZE_SMALL),
+            font=ctk.CTkFont(size=10),
             text_color=(ModernTheme.TEXT_SECONDARY_LIGHT, ModernTheme.TEXT_SECONDARY_DARK)
         )
-        subtitle_label.grid(row=2, column=0, pady=(2, 0))
+        subtitle_label.grid(row=2, column=0, pady=(1, 0))
         
         # Séparateur
         separator = ctk.CTkFrame(
@@ -122,7 +122,7 @@ class ModernSidebar(ctk.CTkFrame):
             height=1,
             fg_color=(ModernTheme.BORDER_LIGHT, ModernTheme.BORDER_DARK)
         )
-        separator.grid(row=1, column=0, padx=20, pady=(0, 20), sticky="ew")
+        separator.grid(row=1, column=0, padx=15, pady=(0, 12), sticky="ew")
     
     def _create_menu_items(self):
         """Crée tous les éléments de menu avec icônes"""
@@ -131,9 +131,12 @@ class ModernSidebar(ctk.CTkFrame):
             ("Élèves", "students", ModernTheme.ICONS['students'], 3),
             ("Enseignants", "teachers", ModernTheme.ICONS['teachers'], 4),
             ("Matières", "subjects", ModernTheme.ICONS['subjects'], 5),
-            ("Groupes", "groups", ModernTheme.ICONS['groups'], 6),
-            ("Paiements", "payments", ModernTheme.ICONS['payments'], 7),
-            ("Présence", "presence", ModernTheme.ICONS['presence'], 8),
+            ("Salles", "rooms", "🚪", 6),
+            ("Groupes", "groups", ModernTheme.ICONS['groups'], 7),
+            ("Emploi du Temps", "schedule", "📅", 8),
+            ("Paiements", "payments", ModernTheme.ICONS['payments'], 9),
+            ("Présence", "presence", ModernTheme.ICONS['presence'], 10),
+            ("Paramètres", "parametres", "⚙️", 11),
         ]
         
         for text, name, icon, row in menu_items:
@@ -143,23 +146,24 @@ class ModernSidebar(ctk.CTkFrame):
                 icon=icon,
                 command=lambda n=name: self._on_menu_click(n)
             )
-            btn.grid(row=row, column=0, padx=15, pady=5, sticky="ew")
+            # Padding vertical réduit de 25% (5 -> 3)
+            btn.grid(row=row, column=0, padx=12, pady=3, sticky="ew")
             self.menu_buttons[name] = btn
             
         # Sélectionner le dashboard par défaut
         self.menu_buttons["dashboard"].set_selected(True)
     
     def _create_footer(self):
-        """Crée le pied de page avec bouton déconnexion"""
+        """Crée le pied de page avec bouton déconnexion - ultra compact (25% de moins)"""
         # Séparateur
         separator = ctk.CTkFrame(
             self,
             height=1,
             fg_color=(ModernTheme.BORDER_LIGHT, ModernTheme.BORDER_DARK)
         )
-        separator.grid(row=11, column=0, padx=20, pady=(10, 15), sticky="ew")
+        separator.grid(row=14, column=0, padx=15, pady=(6, 10), sticky="ew")
         
-        # Bouton de déconnexion
+        # Bouton de déconnexion (padding et height réduits de 25%)
         logout_btn = ctk.CTkButton(
             self,
             text=f"{ModernTheme.ICONS['logout']}  Déconnexion",
@@ -169,12 +173,12 @@ class ModernSidebar(ctk.CTkFrame):
             fg_color="transparent",
             text_color=(ModernTheme.DANGER, ModernTheme.DANGER),
             hover_color=(ModernTheme.SIDEBAR_HOVER_LIGHT, ModernTheme.SIDEBAR_HOVER_DARK),
-            border_width=2,
+            border_width=1,
             border_color=(ModernTheme.DANGER, ModernTheme.DANGER),
             anchor="center",
             command=self._on_logout
         )
-        logout_btn.grid(row=12, column=0, padx=15, pady=(0, 20), sticky="ew")
+        logout_btn.grid(row=15, column=0, padx=12, pady=(0, 12), sticky="ew")
     
     def _on_menu_click(self, view_name):
         """Gère le clic sur un élément de menu"""

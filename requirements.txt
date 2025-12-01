@@ -1,6 +1,7 @@
-customtkinter
-pillow
-matplotlib
-pandas
-openpyxl
-reportlab
+customtkinter>=5.2.0
+pillow>=10.0.0
+matplotlib>=3.7.0
+pandas>=2.0.0
+openpyxl>=3.1.0
+reportlab>=4.0.0
+darkdetect>=0.8.0

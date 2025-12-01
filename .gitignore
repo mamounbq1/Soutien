@@ -13,6 +13,9 @@ build/
 *.sqlite
 *.sqlite3
 
+# Drafts (auto-save)
+database/drafts/
+
 # IDE
 .vscode/
 .idea/
@@ -27,3 +30,11 @@ Thumbs.db
 venv/
 env/
 ENV/
+
+# Configuration
+.env
+*.log
+
+# Outputs
+outputs/
+exports/

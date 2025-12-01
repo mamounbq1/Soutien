@@ -18,10 +18,11 @@ from widgets.modern_components import (
     ModernCard,
     SearchBar,
     PageHeader,
-    TableHeader,
-    TableRow,
+    BorderedTable,
     ActionButtons
 )
+from utils import center_window
+from utils.messages import Messages
 
 
 class StudentForm(ctk.CTkToplevel):
@@ -52,16 +53,7 @@ class StudentForm(ctk.CTkToplevel):
             self._fill_fields()
         
         # Centrer la fenêtre
-        self._center_window()
-    
-    def _center_window(self):
-        """Centre la fenêtre sur l'écran"""
-        self.update_idletasks()
-        width = self.winfo_width()
-        height = self.winfo_height()
-        x = (self.winfo_screenwidth() // 2) - (width // 2)
-        y = (self.winfo_screenheight() // 2) - (height // 2)
-        self.geometry(f"{width}x{height}+{x}+{y}")
+        center_window(self)
     
     def _create_ui(self):
         """Crée l'interface du formulaire"""
@@ -100,29 +92,25 @@ class StudentForm(ctk.CTkToplevel):
         self.prenom = ModernEntry(form_content, placeholder="Ex: Ahmed")
         self.prenom.grid(row=1, column=1, pady=10, sticky="ew")
         
-        # Niveau
+        # Niveau (ComboBox with values from DB)
         self._create_field(form_content, "Niveau", 2)
+        niveaux = self._get_niveaux()
         self.niveau = ModernComboBox(
             form_content,
-            values=["Primaire", "Collège", "Lycée", "Supérieur"]
+            values=niveaux
         )
-        self.niveau.set("Lycée")
+        self.niveau.set("")
         self.niveau.grid(row=2, column=1, pady=10, sticky="ew")
         
-        # Filière
-        self._create_field(form_content, "Filière/Classe", 3)
-        self.filiere = ModernEntry(form_content, placeholder="Ex: 1ère Bac Sciences")
-        self.filiere.grid(row=3, column=1, pady=10, sticky="ew")
-        
         # Téléphone
-        self._create_field(form_content, "Téléphone", 4)
+        self._create_field(form_content, "Téléphone", 3)
         self.tel = ModernEntry(form_content, placeholder="Ex: 0612345678")
-        self.tel.grid(row=4, column=1, pady=10, sticky="ew")
+        self.tel.grid(row=3, column=1, pady=10, sticky="ew")
         
         # Téléphone parent
-        self._create_field(form_content, "Tél. Parents", 5)
+        self._create_field(form_content, "Tél. Parents", 4)
         self.parent_tel = ModernEntry(form_content, placeholder="Ex: 0698765432")
-        self.parent_tel.grid(row=5, column=1, pady=10, sticky="ew")
+        self.parent_tel.grid(row=4, column=1, pady=10, sticky="ew")
         
         # Note
         note_label = ModernLabel(
@@ -159,36 +147,71 @@ class StudentForm(ctk.CTkToplevel):
         label = ModernLabel(parent, text=text, style='normal')
         label.grid(row=row, column=0, padx=(0, 15), pady=10, sticky="w")
     
+    def _get_niveaux(self):
+        """Récupérer la liste des niveaux depuis la DB"""
+        try:
+            niveaux_data = self.db_manager.get_all_niveaux(actif_only=True)
+            return [n[1] for n in niveaux_data]  # n[1] = nom_niveau
+        except:
+            # Fallback values if DB fails
+            return ["Primaire", "Collège", "Lycée", "Supérieur"]
+    
     def _fill_fields(self):
         """Remplit les champs avec les données existantes"""
+        # Format DB: (id, nom, prenom, telephone, adresse, ..., classe as niveau)
+        # Indices: 0=id, 1=nom, 2=prenom, 3=tel, 4=adresse, ..., 10=classe (shown as niveau)
         self.nom.insert(0, self.student_data[1])
         self.prenom.insert(0, self.student_data[2])
-        self.niveau.set(self.student_data[3])
-        self.filiere.insert(0, self.student_data[4])
-        self.tel.insert(0, self.student_data[5])
-        self.parent_tel.insert(0, self.student_data[6])
+        self.niveau.insert(0, self.student_data[10] if len(self.student_data) > 10 else "")
+        self.tel.insert(0, self.student_data[3] or "")
+        
+        # Extraire tel parent depuis adresse
+        parent_tel = ""
+        if len(self.student_data) > 4 and self.student_data[4]:
+            parts = self.student_data[4].split('|')
+            for part in parts:
+                if part.startswith("Parent:"):
+                    parent_tel = part.replace("Parent:", "").strip()
+        self.parent_tel.insert(0, parent_tel)
     
     def _save_student(self):
         """Sauvegarde l'élève"""
-        data = {
-            "nom": self.nom.get(),
-            "prenom": self.prenom.get(),
-            "niveau": self.niveau.get(),
-            "filiere": self.filiere.get(),
-            "tel": self.tel.get(),
-            "parent_tel": self.parent_tel.get()
-        }
-        
-        if not data["nom"] or not data["prenom"]:
-            messagebox.showerror("Erreur", "Le nom et le prénom sont obligatoires.")
+        if not self.nom.get() or not self.prenom.get():
+            messagebox.showerror(Messages.ERROR_TITLE, Messages.STUDENT_NAME_REQUIRED)
             return
         
-        if self.student_data:
-            self.db_manager.update_student(self.student_data[0], **data)
-            messagebox.showinfo("✅ Succès", "Élève modifié avec succès.")
-        else:
-            self.db_manager.add_student(**data)
-            messagebox.showinfo("✅ Succès", "Élève ajouté avec succès.")
+        # Construction adresse (juste tel parent)
+        adresse = ""
+        if self.parent_tel.get():
+            adresse = f"Parent: {self.parent_tel.get()}"
+        
+        try:
+            if self.student_data:
+                # Modification - store niveau in classe field, leave filiere empty
+                self.db_manager.update_eleve(
+                    self.student_data[0],
+                    self.nom.get(),
+                    self.prenom.get(),
+                    "",  # filiere not used
+                    self.niveau.get(),  # niveau stored in classe
+                    self.tel.get(),
+                    adresse
+                )
+                messagebox.showinfo(Messages.SUCCESS_TITLE, Messages.STUDENT_UPDATED)
+            else:
+                # Ajout - store niveau in classe field, leave filiere empty
+                self.db_manager.add_eleve(
+                    self.nom.get(),
+                    self.prenom.get(),
+                    "",  # filiere not used
+                    self.niveau.get(),  # niveau stored in classe
+                    self.tel.get(),
+                    adresse
+                )
+                messagebox.showinfo(Messages.SUCCESS_TITLE, Messages.STUDENT_ADDED)
+        except ValueError as e:
+            messagebox.showerror(Messages.ERROR_TITLE, str(e))
+            return
         
         if self.callback:
             self.callback()
@@ -225,84 +248,161 @@ class StudentsPage(ctk.CTkFrame):
         )
         header.grid(row=0, column=0, sticky="ew", pady=(0, 20))
         
+        # Zone de recherche et filtres
+        search_frame = ctk.CTkFrame(self, fg_color="transparent")
+        search_frame.grid(row=1, column=0, sticky="ew", pady=(0, 15))
+        search_frame.grid_columnconfigure(0, weight=1)
+        
         # Barre de recherche
         search_bar = SearchBar(
-            self,
+            search_frame,
             placeholder="Rechercher un élève par nom, prénom ou téléphone...",
             search_callback=self._perform_search,
             refresh_callback=self._load_students
         )
-        search_bar.grid(row=1, column=0, sticky="ew", pady=(0, 15))
+        search_bar.grid(row=0, column=0, sticky="ew", pady=(0, 10))
+        
+        # Frame pour filtres
+        filters_frame = ctk.CTkFrame(search_frame, fg_color="transparent")
+        filters_frame.grid(row=1, column=0, sticky="w")
+        
+        # Label "Filtrer par:"
+        filter_label = ModernLabel(
+            filters_frame,
+            text="Filtrer par niveau:",
+            style='normal'
+        )
+        filter_label.pack(side="left", padx=(0, 10))
+        
+        # ComboBox niveau
+        self.filter_niveau = ModernComboBox(
+            filters_frame,
+            values=["Tous", "Primaire", "Collège", "Lycée", "Supérieur"],
+            width=150
+        )
+        self.filter_niveau.set("Tous")
+        self.filter_niveau.configure(command=self._apply_filters)
+        self.filter_niveau.pack(side="left", padx=(0, 10))
+        
+        # Bouton appliquer filtres
+        apply_filter_btn = ModernButton(
+            filters_frame,
+            text="Appliquer",
+            icon="🔍",
+            style='primary',
+            width=120,
+            command=self._apply_filters
+        )
+        apply_filter_btn.pack(side="left")
         
         # Carte conteneur pour le tableau
         table_card = ModernCard(self)
         table_card.grid(row=2, column=0, sticky="nsew")
         table_card.grid_columnconfigure(0, weight=1)
-        table_card.grid_rowconfigure(1, weight=1)
+        table_card.grid_rowconfigure(0, weight=1)
         
-        # En-tête du tableau
-        headers = TableHeader(
-            table_card,
-            columns=["Nom", "Prénom", "Niveau", "Filière", "Téléphone", "Actions"]
-        )
-        headers.grid(row=0, column=0, sticky="ew", padx=20, pady=(20, 0))
-        
-        # Frame scrollable pour les données
-        self.scroll_frame = ctk.CTkScrollableFrame(
+        # Frame scrollable pour le tableau
+        scroll_container = ctk.CTkScrollableFrame(
             table_card,
             fg_color="transparent"
         )
-        self.scroll_frame.grid(row=1, column=0, sticky="nsew", padx=20, pady=(10, 20))
-        self.scroll_frame.grid_columnconfigure(0, weight=1)
+        scroll_container.grid(row=0, column=0, sticky="nsew", padx=20, pady=20)
+        scroll_container.grid_columnconfigure(0, weight=1)
+        
+        # Tableau avec bordures (style Dashboard)
+        self.table = BorderedTable(
+            scroll_container,
+            headers=["Nom", "Prénom", "Niveau", "Téléphone", "Tél Parents", "Actions"],
+            column_weights=[2, 2, 1, 1, 1, 1]  # Nom et Prénom plus larges
+        )
+        self.table.grid(row=0, column=0, sticky="nsew")
     
     def _load_students(self, students=None):
         """Charge et affiche les élèves"""
-        # Nettoyer le contenu existant
-        for widget in self.scroll_frame.winfo_children():
-            widget.destroy()
+        # Nettoyer les lignes existantes
+        self.table.clear_rows()
         
         if students is None:
             students = self.db_manager.get_all_students()
         
         if not students:
-            no_data = ModernLabel(
-                self.scroll_frame,
-                text="Aucun élève trouvé",
-                style='secondary'
+            # Message si aucun élève
+            no_data_label = ctk.CTkLabel(
+                self.table,
+                text="Aucun élève enregistré",
+                font=ctk.CTkFont(size=ModernTheme.FONT_SIZE_NORMAL),
+                text_color=(ModernTheme.TEXT_SECONDARY_LIGHT, ModernTheme.TEXT_SECONDARY_DARK)
             )
-            no_data.pack(pady=40)
+            no_data_label.grid(row=1, column=0, columnspan=6, pady=40)
             return
         
-        # Créer les lignes du tableau
-        for i, student in enumerate(students):
-            self._create_student_row(student, i)
+        # Ajouter chaque élève au tableau
+        for student in students:
+            self._add_student_row(student)
     
-    def _create_student_row(self, student, index):
-        """Crée une ligne pour un élève"""
-        # Boutons d'action
-        actions = ActionButtons(
-            self.scroll_frame,
-            on_edit=lambda s=student: self._open_edit_dialog(s),
-            on_delete=lambda id=student[0]: self._delete_student(id)
-        )
+    def _add_student_row(self, student):
+        """Ajoute une ligne élève au tableau"""
+        # Stocker les callbacks avec l'ID de l'élève
+        student_id = student[0]
         
-        # Données de la ligne
-        data = [
+        # Fonction callback qui créera les boutons dans la cellule
+        def create_actions_widget(cell_frame):
+            """Crée les boutons d'action dans la cellule fournie"""
+            actions_container = ctk.CTkFrame(cell_frame, fg_color="transparent")
+            
+            # Bouton éditer
+            edit_btn = ctk.CTkButton(
+                actions_container,
+                text="Modifier",
+                width=70,
+                height=26,
+                corner_radius=ModernTheme.BORDER_RADIUS_SMALL,
+                fg_color=(ModernTheme.WARNING, ModernTheme.WARNING),
+                hover_color=("#F57C00", "#F57C00"),
+                font=ctk.CTkFont(size=11),
+                command=lambda: self._open_edit_dialog(student)
+            )
+            edit_btn.pack(side="left", padx=(0, 4))
+            
+            # Bouton supprimer
+            delete_btn = ctk.CTkButton(
+                actions_container,
+                text="Supprimer",
+                width=75,
+                height=26,
+                corner_radius=ModernTheme.BORDER_RADIUS_SMALL,
+                fg_color=(ModernTheme.DANGER, ModernTheme.DANGER),
+                hover_color=(ModernTheme.BTN_DANGER_HOVER, ModernTheme.BTN_DANGER_HOVER),
+                font=ctk.CTkFont(size=11),
+                command=lambda: self._delete_student(student_id)
+            )
+            delete_btn.pack(side="left")
+            
+            return actions_container
+        
+        # Ajouter la ligne avec les données (fonction callback pour actions)
+        # Format DB: (id, nom, prenom, telephone, adresse, ..., filiere, classe)
+        # Indices: 0=id, 1=nom, 2=prenom, 3=tel, 4=adresse, 9=filiere, 10=classe
+        
+        # Extraire téléphone parent depuis adresse
+        tel_parent = ""
+        if len(student) > 4 and student[4]:
+            parts = student[4].split('|')
+            for part in parts:
+                if part.startswith("Parent:"):
+                    tel_parent = part.replace("Parent:", "").strip()
+        
+        # Construire niveau depuis classe
+        niveau = student[10] if len(student) > 10 else ""
+        
+        self.table.add_row([
             student[1],  # Nom
             student[2],  # Prénom
-            student[3],  # Niveau
-            student[4],  # Filière
-            student[5],  # Téléphone
-        ]
-        
-        # Créer la ligne
-        row = TableRow(
-            self.scroll_frame,
-            data=data,
-            actions_widget=actions,
-            is_alternate=(index % 2 == 0)
-        )
-        row.pack(fill="x", pady=2)
+            niveau or "-",  # Niveau (=classe)
+            student[3] or "-",  # Téléphone
+            tel_parent or "-",  # Tél Parents (extrait de adresse)
+            create_actions_widget  # Fonction callback
+        ])
     
     def _open_add_dialog(self):
         """Ouvre le dialogue d'ajout"""
@@ -328,9 +428,19 @@ class StudentsPage(ctk.CTkFrame):
             messagebox.showinfo("✅ Succès", "Élève supprimé avec succès.")
     
     def _perform_search(self, query):
-        """Effectue une recherche"""
+        """Effectue une recherche avec filtres"""
         if query:
             results = self.db_manager.search_students(query)
-            self._load_students(results)
         else:
-            self._load_students()
+            results = self.db_manager.get_all_students()
+        
+        # Appliquer le filtre de niveau
+        niveau_filter = self.filter_niveau.get()
+        if niveau_filter != "Tous" and results:
+            results = [s for s in results if s[3] == niveau_filter]
+        
+        self._load_students(results)
+    
+    def _apply_filters(self, *args):
+        """Applique les filtres actifs"""
+        self._perform_search(None)

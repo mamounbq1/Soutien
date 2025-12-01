@@ -14,7 +14,7 @@ from config.theme import ModernTheme
 
 
 class ModernStatCard(ctk.CTkFrame):
-    """Carte de statistique modernisée avec icône et design attractif"""
+    """Carte de statistique modernisée - ultra compacte (25% plus petite)"""
     
     def __init__(self, master, title, value, icon, color_scheme, **kwargs):
         # Récupérer les couleurs du schéma
@@ -22,50 +22,51 @@ class ModernStatCard(ctk.CTkFrame):
         
         super().__init__(
             master,
-            corner_radius=ModernTheme.BORDER_RADIUS,
+            corner_radius=ModernTheme.BORDER_RADIUS_SMALL,
             fg_color=bg_color,
             **kwargs
         )
         
-        self.configure(height=ModernTheme.CARD_HEIGHT)
+        # Hauteur ultra réduite (25% de moins: 90 - 25% = 68px)
+        self.configure(height=68)
         self.grid_columnconfigure(0, weight=1)
         
-        # Container avec padding
+        # Container avec padding ultra réduit
         content_frame = ctk.CTkFrame(self, fg_color="transparent")
-        content_frame.pack(fill="both", expand=True, padx=20, pady=15)
+        content_frame.pack(fill="both", expand=True, padx=8, pady=5)
         
         # Frame pour l'icône et le titre
         top_frame = ctk.CTkFrame(content_frame, fg_color="transparent")
-        top_frame.pack(fill="x", pady=(0, 10))
+        top_frame.pack(fill="x", pady=(0, 2))
         
-        # Icône
+        # Icône encore plus petite (18px - 25% de moins que 24px)
         icon_label = ctk.CTkLabel(
             top_frame,
             text=icon,
-            font=ctk.CTkFont(size=32),
+            font=ctk.CTkFont(size=18),
             text_color="white"
         )
         icon_label.pack(side="left")
         
-        # Titre
+        # Titre (police lisible)
         title_label = ctk.CTkLabel(
             content_frame,
             text=title,
-            font=ctk.CTkFont(size=ModernTheme.FONT_SIZE_SMALL, weight="normal"),
+            font=ctk.CTkFont(size=10, weight="normal"),
             text_color="white",
             anchor="w"
         )
         title_label.pack(fill="x")
         
-        # Valeur
+        # Valeur (police plus grande pour lisibilité)
         value_label = ctk.CTkLabel(
             content_frame,
             text=str(value),
-            font=ctk.CTkFont(size=ModernTheme.FONT_SIZE_XXLARGE, weight="bold"),
+            font=ctk.CTkFont(size=24, weight="bold"),
             text_color="white",
             anchor="w"
         )
-        value_label.pack(fill="x", pady=(5, 0))
+        value_label.pack(fill="x", pady=(1, 0))
         
         # Effet hover subtil
         self.bind("<Enter>", lambda e: self.configure(fg_color=hover_color))
@@ -100,9 +101,9 @@ class ModernDashboard(ctk.CTkFrame):
     def _create_header(self):
         """Crée l'en-tête du dashboard"""
         header_frame = ctk.CTkFrame(self, fg_color="transparent")
-        header_frame.grid(row=0, column=0, columnspan=4, sticky="ew", pady=(0, 25))
+        header_frame.grid(row=0, column=0, columnspan=4, sticky="ew", pady=(0, 15))
         
-        # Titre
+        # Titre (réduit de 25%)
         title_label = ctk.CTkLabel(
             header_frame,
             text="Tableau de Bord",
@@ -111,7 +112,7 @@ class ModernDashboard(ctk.CTkFrame):
         )
         title_label.pack(side="left")
         
-        # Date actuelle
+        # Date actuelle (réduit de 25%)
         date_str = datetime.now().strftime("%A %d %B %Y")
         date_label = ctk.CTkLabel(
             header_frame,
@@ -119,7 +120,7 @@ class ModernDashboard(ctk.CTkFrame):
             font=ctk.CTkFont(size=ModernTheme.FONT_SIZE_NORMAL),
             text_color=(ModernTheme.TEXT_SECONDARY_LIGHT, ModernTheme.TEXT_SECONDARY_DARK)
         )
-        date_label.pack(side="right", padx=(0, 10))
+        date_label.pack(side="right", padx=(0, 8))
     
     def _create_stat_cards(self):
         """Crée les cartes de statistiques"""
@@ -167,7 +168,7 @@ class ModernDashboard(ctk.CTkFrame):
     
     def _create_recent_payments_section(self):
         """Crée la section des paiements récents"""
-        # Frame principale
+        # Frame principale (padding réduit)
         section_frame = ctk.CTkFrame(
             self,
             corner_radius=ModernTheme.BORDER_RADIUS,
@@ -177,9 +178,9 @@ class ModernDashboard(ctk.CTkFrame):
         section_frame.grid_columnconfigure(0, weight=1)
         section_frame.grid_rowconfigure(1, weight=1)
         
-        # En-tête de la section
+        # En-tête de la section (padding réduit)
         header_frame = ctk.CTkFrame(section_frame, fg_color="transparent")
-        header_frame.grid(row=0, column=0, sticky="ew", padx=20, pady=(20, 15))
+        header_frame.grid(row=0, column=0, sticky="ew", padx=12, pady=(12, 8))
         
         title_label = ctk.CTkLabel(
             header_frame,
@@ -190,27 +191,33 @@ class ModernDashboard(ctk.CTkFrame):
         )
         title_label.pack(side="left")
         
-        # Bouton refresh
+        # Bouton refresh (plus compact)
         refresh_btn = ctk.CTkButton(
             header_frame,
             text="🔄",
-            width=40,
-            height=40,
+            width=32,
+            height=32,
             corner_radius=ModernTheme.BORDER_RADIUS_SMALL,
             fg_color=(ModernTheme.BG_HOVER_LIGHT, ModernTheme.BG_HOVER_DARK),
             hover_color=(ModernTheme.BORDER_LIGHT, ModernTheme.BORDER_DARK),
             text_color=(ModernTheme.TEXT_PRIMARY_LIGHT, ModernTheme.TEXT_PRIMARY_DARK),
+            font=ctk.CTkFont(size=16),
             command=self._refresh_payments
         )
         refresh_btn.pack(side="right")
         
-        # Frame scrollable pour le tableau
+        # Frame scrollable pour le tableau (padding réduit)
         self.payments_scroll = ctk.CTkScrollableFrame(
             section_frame,
             fg_color="transparent"
         )
-        self.payments_scroll.grid(row=1, column=0, sticky="nsew", padx=20, pady=(0, 20))
-        self.payments_scroll.grid_columnconfigure((0, 1, 2, 3), weight=1)
+        self.payments_scroll.grid(row=1, column=0, sticky="nsew", padx=12, pady=(0, 12))
+        # Configuration de la grille - 5 colonnes simples
+        self.payments_scroll.grid_columnconfigure(0, weight=2)  # Élève (plus large)
+        self.payments_scroll.grid_columnconfigure(1, weight=1)  # Montant
+        self.payments_scroll.grid_columnconfigure(2, weight=1)  # Mois
+        self.payments_scroll.grid_columnconfigure(3, weight=1)  # Date
+        self.payments_scroll.grid_columnconfigure(4, weight=1)  # Actions
         
         self._load_recent_payments()
     
@@ -224,10 +231,11 @@ class ModernDashboard(ctk.CTkFrame):
             conn = self.db_manager.get_connection()
             cursor = conn.cursor()
             cursor.execute('''
-                SELECT s.nom || ' ' || s.prenom as student, p.montant, p.mois, p.date_paiement
-                FROM paiements p
-                JOIN students s ON p.student_id = s.id
-                ORDER BY p.date_paiement DESC
+                SELECT pe.id_paiement_eleve, e.nom || ' ' || e.prenom as student, pe.montant_paye, pe.mois, 
+                       pe.date_paiement, pe.id_eleve, e.nom, e.prenom, ''
+                FROM PAIEMENT_ELEVE pe
+                JOIN ELEVE e ON pe.id_eleve = e.id_eleve
+                ORDER BY pe.date_paiement DESC
                 LIMIT 10
             ''')
             payments = cursor.fetchall()
@@ -241,71 +249,99 @@ class ModernDashboard(ctk.CTkFrame):
                     font=ctk.CTkFont(size=ModernTheme.FONT_SIZE_NORMAL),
                     text_color=(ModernTheme.TEXT_SECONDARY_LIGHT, ModernTheme.TEXT_SECONDARY_DARK)
                 )
-                no_data_label.grid(row=0, column=0, columnspan=4, pady=40)
+                no_data_label.grid(row=0, column=0, columnspan=5, pady=20)
                 return
             
             # En-têtes du tableau
-            headers = ["Élève", "Montant", "Mois", "Date"]
-            for i, header in enumerate(headers):
+            headers = ["Élève", "Montant", "Mois", "Date", "Actions"]
+            for col, header in enumerate(headers):
+                # Frame pour chaque en-tête avec bordure
+                header_frame = ctk.CTkFrame(
+                    self.payments_scroll,
+                    fg_color=(ModernTheme.BG_HOVER_LIGHT, ModernTheme.BG_HOVER_DARK),
+                    corner_radius=0,
+                    border_width=1,
+                    border_color=(ModernTheme.BORDER_LIGHT, ModernTheme.BORDER_DARK)
+                )
+                header_frame.grid(row=0, column=col, sticky="nsew", padx=0, pady=0)
+                
                 header_label = ctk.CTkLabel(
-                    self.payments_scroll,
+                    header_frame,
                     text=header,
-                    font=ctk.CTkFont(size=ModernTheme.FONT_SIZE_SMALL, weight="bold"),
+                    font=ctk.CTkFont(size=10, weight="bold"),
                     text_color=(ModernTheme.TEXT_SECONDARY_LIGHT, ModernTheme.TEXT_SECONDARY_DARK),
                     anchor="w"
                 )
-                header_label.grid(row=0, column=i, padx=15, pady=(0, 10), sticky="w")
+                header_label.pack(padx=8, pady=6, fill="both", expand=True)
             
-            # Lignes de données
+            # Lignes de données avec bordures
             for idx, payment in enumerate(payments, start=1):
-                row_frame = ctk.CTkFrame(
-                    self.payments_scroll,
-                    fg_color=(ModernTheme.BG_HOVER_LIGHT if idx % 2 == 0 else "transparent",
-                             ModernTheme.BG_HOVER_DARK if idx % 2 == 0 else "transparent"),
-                    corner_radius=ModernTheme.BORDER_RADIUS_SMALL
-                )
-                row_frame.grid(row=idx, column=0, columnspan=4, sticky="ew", pady=2)
-                row_frame.grid_columnconfigure((0, 1, 2, 3), weight=1)
+                payment_id, student_name, montant, mois, date_paiement, student_id, nom, prenom, niveau = payment
                 
-                # Élève
-                student_label = ctk.CTkLabel(
-                    row_frame,
-                    text=payment[0],
-                    font=ctk.CTkFont(size=ModernTheme.FONT_SIZE_NORMAL),
-                    text_color=(ModernTheme.TEXT_PRIMARY_LIGHT, ModernTheme.TEXT_PRIMARY_DARK),
-                    anchor="w"
-                )
-                student_label.grid(row=0, column=0, padx=15, pady=8, sticky="w")
+                # Couleur alternée
+                if idx % 2 == 0:
+                    row_color = (ModernTheme.BG_HOVER_LIGHT, ModernTheme.BG_HOVER_DARK)
+                else:
+                    row_color = "transparent"
                 
-                # Montant
-                montant_label = ctk.CTkLabel(
-                    row_frame,
-                    text=f"{payment[1]} DH",
-                    font=ctk.CTkFont(size=ModernTheme.FONT_SIZE_NORMAL, weight="bold"),
-                    text_color=(ModernTheme.SUCCESS, ModernTheme.SUCCESS),
-                    anchor="w"
-                )
-                montant_label.grid(row=0, column=1, padx=15, pady=8, sticky="w")
+                # Données de la ligne
+                row_data = [
+                    student_name,
+                    f"{montant} DH",
+                    mois,
+                    date_paiement[:10],
+                    None  # Actions (bouton)
+                ]
                 
-                # Mois
-                mois_label = ctk.CTkLabel(
-                    row_frame,
-                    text=payment[2],
-                    font=ctk.CTkFont(size=ModernTheme.FONT_SIZE_NORMAL),
-                    text_color=(ModernTheme.TEXT_PRIMARY_LIGHT, ModernTheme.TEXT_PRIMARY_DARK),
-                    anchor="w"
-                )
-                mois_label.grid(row=0, column=2, padx=15, pady=8, sticky="w")
-                
-                # Date
-                date_label = ctk.CTkLabel(
-                    row_frame,
-                    text=payment[3][:10],
-                    font=ctk.CTkFont(size=ModernTheme.FONT_SIZE_SMALL),
-                    text_color=(ModernTheme.TEXT_SECONDARY_LIGHT, ModernTheme.TEXT_SECONDARY_DARK),
-                    anchor="w"
-                )
-                date_label.grid(row=0, column=3, padx=15, pady=8, sticky="w")
+                for col, data in enumerate(row_data):
+                    # Frame pour chaque cellule avec bordure
+                    cell_frame = ctk.CTkFrame(
+                        self.payments_scroll,
+                        fg_color=row_color,
+                        corner_radius=0,
+                        border_width=1,
+                        border_color=(ModernTheme.BORDER_LIGHT, ModernTheme.BORDER_DARK)
+                    )
+                    cell_frame.grid(row=idx, column=col, sticky="nsew", padx=0, pady=0)
+                    
+                    if col == 4:  # Colonne Actions
+                        # Bouton Imprimer Reçu
+                        print_btn = ctk.CTkButton(
+                            cell_frame,
+                            text="🖨️ Reçu",
+                            width=70,
+                            height=26,
+                            corner_radius=ModernTheme.BORDER_RADIUS_SMALL,
+                            fg_color=(ModernTheme.PRIMARY, ModernTheme.PRIMARY),
+                            hover_color=(ModernTheme.PRIMARY_DARK, ModernTheme.PRIMARY_DARK),
+                            font=ctk.CTkFont(size=10),
+                            command=lambda p_id=payment_id, s_nom=nom, s_prenom=prenom, s_niv=niveau, 
+                                   p_mois=mois, p_montant=montant, p_date=date_paiement: 
+                                   self._print_receipt(p_id, s_nom, s_prenom, s_niv, p_mois, p_montant, p_date)
+                        )
+                        print_btn.pack(padx=6, pady=4)
+                    else:
+                        # Label texte
+                        text_color = (ModernTheme.TEXT_PRIMARY_LIGHT, ModernTheme.TEXT_PRIMARY_DARK)
+                        font_size = 11
+                        font_weight = "normal"
+                        
+                        # Couleur spéciale pour montant
+                        if col == 1:  # Montant
+                            text_color = (ModernTheme.SUCCESS, ModernTheme.SUCCESS)
+                            font_weight = "bold"
+                        elif col == 3:  # Date
+                            text_color = (ModernTheme.TEXT_SECONDARY_LIGHT, ModernTheme.TEXT_SECONDARY_DARK)
+                            font_size = 10
+                        
+                        cell_label = ctk.CTkLabel(
+                            cell_frame,
+                            text=data,
+                            font=ctk.CTkFont(size=font_size, weight=font_weight),
+                            text_color=text_color,
+                            anchor="w"
+                        )
+                        cell_label.pack(padx=8, pady=6, fill="both", expand=True)
                 
         except Exception as e:
             error_label = ctk.CTkLabel(
@@ -314,7 +350,45 @@ class ModernDashboard(ctk.CTkFrame):
                 font=ctk.CTkFont(size=ModernTheme.FONT_SIZE_NORMAL),
                 text_color=(ModernTheme.DANGER, ModernTheme.DANGER)
             )
-            error_label.grid(row=0, column=0, columnspan=4, pady=20)
+            error_label.grid(row=0, column=0, columnspan=5, pady=20)
+    
+    def _print_receipt(self, payment_id, nom, prenom, niveau, mois, montant, date_paiement):
+        """Génère et ouvre le reçu de paiement"""
+        try:
+            from utils.pdf_generator import PDFGenerator
+            
+            # Préparer les données
+            student_data = {
+                'nom': nom,
+                'prenom': prenom,
+                'niveau': niveau
+            }
+            
+            payment_data = {
+                'montant': montant,
+                'mois': mois,
+                'annee': date_paiement[:4],
+                'date_paiement': date_paiement,
+                'reference': f"PAY-{payment_id:05d}"
+            }
+            
+            # Générer le PDF
+            pdf_gen = PDFGenerator()
+            pdf_path = pdf_gen.generate_student_invoice(student_data, payment_data)
+            
+            # Ouvrir le PDF
+            import subprocess
+            import platform
+            if platform.system() == 'Windows':
+                os.startfile(pdf_path)
+            elif platform.system() == 'Darwin':
+                subprocess.Popen(['open', pdf_path])
+            else:
+                subprocess.Popen(['xdg-open', pdf_path])
+                
+        except Exception as e:
+            from tkinter import messagebox
+            messagebox.showerror("Erreur", f"Impossible de générer le reçu:\n{str(e)}")
     
     def _refresh_payments(self):
         """Rafraîchit la liste des paiements"""
@@ -326,7 +400,7 @@ class ModernDashboard(ctk.CTkFrame):
         try:
             conn = self.db_manager.get_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT COUNT(*) FROM students")
+            cursor.execute("SELECT COUNT(*) FROM ELEVE")
             count = cursor.fetchone()[0]
             conn.close()
             return count
@@ -337,7 +411,7 @@ class ModernDashboard(ctk.CTkFrame):
         try:
             conn = self.db_manager.get_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT COUNT(*) FROM teachers")
+            cursor.execute("SELECT COUNT(*) FROM PROFESSEUR")
             count = cursor.fetchone()[0]
             conn.close()
             return count
@@ -348,7 +422,7 @@ class ModernDashboard(ctk.CTkFrame):
         try:
             conn = self.db_manager.get_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT COUNT(*) FROM groups")
+            cursor.execute("SELECT COUNT(*) FROM GROUPE")
             count = cursor.fetchone()[0]
             conn.close()
             return count
@@ -359,7 +433,7 @@ class ModernDashboard(ctk.CTkFrame):
         try:
             conn = self.db_manager.get_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT COUNT(*) FROM subjects")
+            cursor.execute("SELECT COUNT(*) FROM MATIERE")
             count = cursor.fetchone()[0]
             conn.close()
             return count
@@ -381,7 +455,7 @@ class ModernDashboard(ctk.CTkFrame):
         try:
             conn = self.db_manager.get_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT COUNT(*) FROM paiements")
+            cursor.execute("SELECT COUNT(*) FROM PAIEMENT_ELEVE")
             count = cursor.fetchone()[0]
             conn.close()
             return count

@@ -17,10 +17,10 @@ from widgets.modern_components import (
     ModernCard,
     SearchBar,
     PageHeader,
-    TableHeader,
-    TableRow,
+    BorderedTable,
     ActionButtons
 )
+from ui.print_dialogs import PrintTeacherPayslipDialog
 
 
 class TeacherForm(ctk.CTkToplevel):
@@ -217,84 +217,118 @@ class TeachersPage(ctk.CTkFrame):
         )
         header.grid(row=0, column=0, sticky="ew", pady=(0, 20))
         
-        # Barre de recherche
+        # Barre de recherche et bouton d'impression
+        search_container = ctk.CTkFrame(self, fg_color="transparent")
+        search_container.grid(row=1, column=0, sticky="ew", pady=(0, 15))
+        search_container.grid_columnconfigure(0, weight=1)
+        
         search_bar = SearchBar(
-            self,
+            search_container,
             placeholder="Rechercher un enseignant par nom, prénom ou matière...",
             search_callback=self._perform_search,
             refresh_callback=self._load_teachers
         )
-        search_bar.grid(row=1, column=0, sticky="ew", pady=(0, 15))
+        search_bar.grid(row=0, column=0, sticky="ew", padx=(0, 10))
+        
+        ModernButton(
+            search_container,
+            text="🖨️ Fiche de Paie",
+            command=self._open_print_dialog,
+            style='primary',
+            width=160
+        ).grid(row=0, column=1)
         
         # Carte conteneur pour le tableau
         table_card = ModernCard(self)
         table_card.grid(row=2, column=0, sticky="nsew")
         table_card.grid_columnconfigure(0, weight=1)
-        table_card.grid_rowconfigure(1, weight=1)
+        table_card.grid_rowconfigure(0, weight=1)
         
-        # En-tête du tableau
-        headers = TableHeader(
-            table_card,
-            columns=["Nom", "Prénom", "Matière", "Téléphone", "Salaire/h", "Actions"]
-        )
-        headers.grid(row=0, column=0, sticky="ew", padx=20, pady=(20, 0))
-        
-        # Frame scrollable pour les données
-        self.scroll_frame = ctk.CTkScrollableFrame(
+        # Frame scrollable pour le tableau
+        scroll_container = ctk.CTkScrollableFrame(
             table_card,
             fg_color="transparent"
         )
-        self.scroll_frame.grid(row=1, column=0, sticky="nsew", padx=20, pady=(10, 20))
-        self.scroll_frame.grid_columnconfigure(0, weight=1)
+        scroll_container.grid(row=0, column=0, sticky="nsew", padx=20, pady=20)
+        scroll_container.grid_columnconfigure(0, weight=1)
+        
+        # Tableau avec bordures (style Dashboard)
+        self.table = BorderedTable(
+            scroll_container,
+            headers=["Nom", "Prénom", "Matière", "Téléphone", "Salaire/h", "Actions"],
+            column_weights=[2, 2, 1, 1, 1, 1]
+        )
+        self.table.grid(row=0, column=0, sticky="nsew")
     
     def _load_teachers(self, teachers=None):
         """Charge et affiche les enseignants"""
-        # Nettoyer le contenu existant
-        for widget in self.scroll_frame.winfo_children():
-            widget.destroy()
+        # Nettoyer les lignes existantes
+        self.table.clear_rows()
         
         if teachers is None:
             teachers = self.db_manager.get_all_teachers()
         
         if not teachers:
-            no_data = ModernLabel(
-                self.scroll_frame,
-                text="Aucun enseignant trouvé",
-                style='secondary'
+            no_data_label = ctk.CTkLabel(
+                self.table,
+                text="Aucun enseignant enregistré",
+                font=ctk.CTkFont(size=ModernTheme.FONT_SIZE_NORMAL),
+                text_color=(ModernTheme.TEXT_SECONDARY_LIGHT, ModernTheme.TEXT_SECONDARY_DARK)
             )
-            no_data.pack(pady=40)
+            no_data_label.grid(row=1, column=0, columnspan=6, pady=40)
             return
         
-        # Créer les lignes du tableau
-        for i, teacher in enumerate(teachers):
-            self._create_teacher_row(teacher, i)
+        # Ajouter chaque enseignant au tableau
+        for teacher in teachers:
+            self._add_teacher_row(teacher)
     
-    def _create_teacher_row(self, teacher, index):
-        """Crée une ligne pour un enseignant"""
-        # Boutons d'action
-        actions = ActionButtons(
-            self.scroll_frame,
-            on_edit=lambda t=teacher: self._open_edit_dialog(t),
-            on_delete=lambda id=teacher[0]: self._delete_teacher(id)
-        )
+    def _add_teacher_row(self, teacher):
+        """Ajoute une ligne enseignant au tableau"""
+        teacher_id = teacher[0]
         
-        # Données de la ligne
-        data = [
+        def create_actions_widget(cell_frame):
+            """Crée les boutons d'action dans la cellule fournie"""
+            actions_container = ctk.CTkFrame(cell_frame, fg_color="transparent")
+            
+            # Bouton éditer
+            edit_btn = ctk.CTkButton(
+                actions_container,
+                text="Modifier",
+                width=70,
+                height=26,
+                corner_radius=ModernTheme.BORDER_RADIUS_SMALL,
+                fg_color=(ModernTheme.WARNING, ModernTheme.WARNING),
+                hover_color=("#F57C00", "#F57C00"),
+                font=ctk.CTkFont(size=11),
+                command=lambda: self._open_edit_dialog(teacher)
+            )
+            edit_btn.pack(side="left", padx=(0, 4))
+            
+            # Bouton supprimer
+            delete_btn = ctk.CTkButton(
+                actions_container,
+                text="Supprimer",
+                width=75,
+                height=26,
+                corner_radius=ModernTheme.BORDER_RADIUS_SMALL,
+                fg_color=(ModernTheme.DANGER, ModernTheme.DANGER),
+                hover_color=(ModernTheme.BTN_DANGER_HOVER, ModernTheme.BTN_DANGER_HOVER),
+                font=ctk.CTkFont(size=11),
+                command=lambda: self._delete_teacher(teacher_id)
+            )
+            delete_btn.pack(side="left")
+            
+            return actions_container
+        
+        # Ajouter la ligne avec les données
+        self.table.add_row([
             teacher[1],  # Nom
             teacher[2],  # Prénom
             teacher[3] or "-",  # Matière
             teacher[4] or "-",  # Téléphone
             f"{teacher[5]} DH" if teacher[5] else "-",  # Salaire
-        ]
-        
-        # Créer la ligne
-        row = TableRow(
-            self.scroll_frame,
-            data=data,
-            actions_widget=actions,
-            is_alternate=(index % 2 == 0)
-        )
-        row.pack(fill="x", pady=2)
+            create_actions_widget
+        ])
     
     def _open_add_dialog(self):
         """Ouvre le dialogue d'ajout"""
@@ -318,6 +352,10 @@ class TeachersPage(ctk.CTkFrame):
             self.db_manager.delete_teacher(teacher_id)
             self._load_teachers()
             messagebox.showinfo("✅ Succès", "Enseignant supprimé avec succès.")
+    
+    def _open_print_dialog(self):
+        """Ouvre le dialogue d'impression de fiche de paie"""
+        PrintTeacherPayslipDialog(self, self.db_manager)
     
     def _perform_search(self, query):
         """Effectue une recherche"""

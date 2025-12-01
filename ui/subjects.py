@@ -18,8 +18,7 @@ from widgets.modern_components import (
     ModernCard,
     SearchBar,
     PageHeader,
-    TableHeader,
-    TableRow,
+    BorderedTable,
     ActionButtons
 )
 
@@ -209,70 +208,86 @@ class SubjectsPage(ctk.CTkFrame):
         table_card = ModernCard(self)
         table_card.grid(row=2, column=0, sticky="nsew")
         table_card.grid_columnconfigure(0, weight=1)
-        table_card.grid_rowconfigure(1, weight=1)
+        table_card.grid_rowconfigure(0, weight=1)
         
-        # En-tête du tableau
-        headers = TableHeader(
-            table_card,
-            columns=["Nom", "Description", "Tarif Mensuel", "Actions"]
-        )
-        headers.grid(row=0, column=0, sticky="ew", padx=20, pady=(20, 0))
-        
-        # Frame scrollable pour les données
-        self.scroll_frame = ctk.CTkScrollableFrame(
+        # Frame scrollable pour le tableau
+        scroll_container = ctk.CTkScrollableFrame(
             table_card,
             fg_color="transparent"
         )
-        self.scroll_frame.grid(row=1, column=0, sticky="nsew", padx=20, pady=(10, 20))
-        self.scroll_frame.grid_columnconfigure(0, weight=1)
+        scroll_container.grid(row=0, column=0, sticky="nsew", padx=20, pady=20)
+        scroll_container.grid_columnconfigure(0, weight=1)
+        
+        # Tableau avec bordures (style Dashboard)
+        self.table = BorderedTable(
+            scroll_container,
+            headers=["Nom", "Description", "Tarif Mensuel", "Actions"],
+            column_weights=[2, 3, 1, 1]
+        )
+        self.table.grid(row=0, column=0, sticky="nsew")
     
     def _load_subjects(self, subjects=None):
         """Charge et affiche les matières"""
-        # Nettoyer le contenu existant
-        for widget in self.scroll_frame.winfo_children():
-            widget.destroy()
+        self.table.clear_rows()
         
         if subjects is None:
             subjects = self.db_manager.get_all_subjects()
         
         if not subjects:
-            no_data = ModernLabel(
-                self.scroll_frame,
-                text="Aucune matière trouvée",
-                style='secondary'
+            no_data_label = ctk.CTkLabel(
+                self.table,
+                text="Aucune matière enregistrée",
+                font=ctk.CTkFont(size=ModernTheme.FONT_SIZE_NORMAL),
+                text_color=(ModernTheme.TEXT_SECONDARY_LIGHT, ModernTheme.TEXT_SECONDARY_DARK)
             )
-            no_data.pack(pady=40)
+            no_data_label.grid(row=1, column=0, columnspan=4, pady=40)
             return
         
-        # Créer les lignes du tableau
-        for i, subject in enumerate(subjects):
-            self._create_subject_row(subject, i)
+        for subject in subjects:
+            self._add_subject_row(subject)
     
-    def _create_subject_row(self, subject, index):
-        """Crée une ligne pour une matière"""
-        # Boutons d'action
-        actions = ActionButtons(
-            self.scroll_frame,
-            on_edit=lambda s=subject: self._open_edit_dialog(s),
-            on_delete=lambda id=subject[0]: self._delete_subject(id)
-        )
+    def _add_subject_row(self, subject):
+        """Ajoute une ligne matière au tableau"""
+        subject_id = subject[0]
         
-        # Données de la ligne
+        def create_actions_widget(cell_frame):
+            actions_container = ctk.CTkFrame(cell_frame, fg_color="transparent")
+            
+            edit_btn = ctk.CTkButton(
+                actions_container,
+                text="Modifier",
+                width=70,
+                height=26,
+                corner_radius=ModernTheme.BORDER_RADIUS_SMALL,
+                fg_color=(ModernTheme.WARNING, ModernTheme.WARNING),
+                hover_color=("#F57C00", "#F57C00"),
+                font=ctk.CTkFont(size=11),
+                command=lambda: self._open_edit_dialog(subject)
+            )
+            edit_btn.pack(side="left", padx=(0, 4))
+            
+            delete_btn = ctk.CTkButton(
+                actions_container,
+                text="Supprimer",
+                width=75,
+                height=26,
+                corner_radius=ModernTheme.BORDER_RADIUS_SMALL,
+                fg_color=(ModernTheme.DANGER, ModernTheme.DANGER),
+                hover_color=(ModernTheme.BTN_DANGER_HOVER, ModernTheme.BTN_DANGER_HOVER),
+                font=ctk.CTkFont(size=11),
+                command=lambda: self._delete_subject(subject_id)
+            )
+            delete_btn.pack(side="left")
+            
+            return actions_container
+        
         desc = subject[2][:50] + "..." if subject[2] and len(subject[2]) > 50 else (subject[2] or "-")
-        data = [
-            subject[1],  # Nom
-            desc,  # Description (tronquée)
-            f"{subject[3]} DH" if subject[3] else "-",  # Tarif
-        ]
-        
-        # Créer la ligne
-        row = TableRow(
-            self.scroll_frame,
-            data=data,
-            actions_widget=actions,
-            is_alternate=(index % 2 == 0)
-        )
-        row.pack(fill="x", pady=2)
+        self.table.add_row([
+            subject[1],
+            desc,
+            f"{subject[3]} DH" if subject[3] else "-",
+            create_actions_widget
+        ])
     
     def _open_add_dialog(self):
         """Ouvre le dialogue d'ajout"""

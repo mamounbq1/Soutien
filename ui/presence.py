@@ -103,19 +103,33 @@ class PresencePage(ctk.CTkFrame):
         table_card.grid_columnconfigure(0, weight=1)
         table_card.grid_rowconfigure(1, weight=1)
         
-        # En-tête du tableau
+        # En-tête du tableau avec BorderedTable style
         header_frame = ctk.CTkFrame(
             table_card,
-            fg_color=(ModernTheme.CARD_LIGHT, ModernTheme.CARD_DARK)
+            fg_color=(ModernTheme.BG_HOVER_LIGHT, ModernTheme.BG_HOVER_DARK),
+            corner_radius=0
         )
         header_frame.grid(row=0, column=0, sticky="ew", padx=20, pady=(20, 0))
         header_frame.grid_columnconfigure((0, 1, 2), weight=1)
         
         headers = ["Nom", "Prénom", "Statut"]
         for i, h in enumerate(headers):
-            ModernLabel(header_frame, text=h, style='subheading').grid(
-                row=0, column=i, padx=15, pady=15
+            # Cellule de header avec bordures
+            header_cell = ctk.CTkFrame(
+                header_frame,
+                fg_color="transparent",
+                border_width=1,
+                border_color=(ModernTheme.BORDER_LIGHT, ModernTheme.BORDER_DARK),
+                corner_radius=0
             )
+            header_cell.grid(row=0, column=i, sticky="nsew")
+            
+            ModernLabel(
+                header_cell,
+                text=h,
+                font_size=10,
+                font_weight="bold"
+            ).pack(padx=8, pady=6)
         
         # Frame scrollable pour le contenu
         self.scroll_frame = ctk.CTkScrollableFrame(
@@ -203,31 +217,52 @@ class PresencePage(ctk.CTkFrame):
         """Crée une ligne de présence pour un étudiant"""
         student_id = student[0]
         
-        # Frame de ligne
+        # Frame de ligne avec bordures (style BorderedTable)
         row_frame = ctk.CTkFrame(
             self.scroll_frame,
             fg_color=(
-                ModernTheme.TABLE_ALT_LIGHT if index % 2 == 0 else "transparent",
-                ModernTheme.TABLE_ALT_DARK if index % 2 == 0 else "transparent"
+                ModernTheme.BG_HOVER_LIGHT if index % 2 == 0 else ModernTheme.BG_CARD_LIGHT,
+                ModernTheme.BG_HOVER_DARK if index % 2 == 0 else ModernTheme.BG_CARD_DARK
             ),
-            corner_radius=ModernTheme.RADIUS_SMALL
+            corner_radius=0
         )
-        row_frame.grid(row=index, column=0, columnspan=3, sticky="ew", pady=3)
+        row_frame.grid(row=index, column=0, columnspan=3, sticky="ew", pady=0)
         row_frame.grid_columnconfigure((0, 1, 2), weight=1)
         
-        # Nom
-        ModernLabel(row_frame, text=student[1], style='normal').grid(
-            row=0, column=0, padx=15, pady=12
+        # Nom - avec bordure
+        nom_cell = ctk.CTkFrame(
+            row_frame,
+            fg_color="transparent",
+            border_width=1,
+            border_color=(ModernTheme.BORDER_LIGHT, ModernTheme.BORDER_DARK),
+            corner_radius=0
         )
+        nom_cell.grid(row=0, column=0, sticky="nsew")
+        ModernLabel(nom_cell, text=student[1], font_size=11).pack(padx=8, pady=6)
         
-        # Prénom
-        ModernLabel(row_frame, text=student[2], style='normal').grid(
-            row=0, column=1, padx=15, pady=12
+        # Prénom - avec bordure
+        prenom_cell = ctk.CTkFrame(
+            row_frame,
+            fg_color="transparent",
+            border_width=1,
+            border_color=(ModernTheme.BORDER_LIGHT, ModernTheme.BORDER_DARK),
+            corner_radius=0
         )
+        prenom_cell.grid(row=0, column=1, sticky="nsew")
+        ModernLabel(prenom_cell, text=student[2], font_size=11).pack(padx=8, pady=6)
         
-        # Statut (Radio buttons)
-        status_frame = ctk.CTkFrame(row_frame, fg_color="transparent")
-        status_frame.grid(row=0, column=2, padx=15, pady=12)
+        # Statut (Radio buttons) - avec bordure
+        status_cell = ctk.CTkFrame(
+            row_frame,
+            fg_color="transparent",
+            border_width=1,
+            border_color=(ModernTheme.BORDER_LIGHT, ModernTheme.BORDER_DARK),
+            corner_radius=0
+        )
+        status_cell.grid(row=0, column=2, sticky="nsew")
+        
+        status_frame = ctk.CTkFrame(status_cell, fg_color="transparent")
+        status_frame.pack(padx=8, pady=6)
         
         status_var = ctk.StringVar(value=presence_dict.get(student_id, "present"))
         
