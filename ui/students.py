@@ -463,3 +463,12 @@ class StudentsPage(ctk.CTkFrame):
     def _apply_filters(self, *args):
         """Applique les filtres actifs"""
         self._perform_search(None)
+    
+    def _get_niveaux(self):
+        """Récupérer la liste des niveaux depuis la DB"""
+        try:
+            niveaux_data = self.db_manager.get_all_niveaux(actif_only=True)
+            return [n[1] for n in niveaux_data]  # n[1] = nom_niveau
+        except:
+            # Fallback values if DB fails
+            return ["Primaire", "Collège", "Lycée", "Supérieur"]
