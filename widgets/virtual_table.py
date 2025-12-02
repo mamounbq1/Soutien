@@ -375,9 +375,11 @@ class VirtualScrollTable(ctk.CTkFrame):
             tags=f"row_{row_index}"
         )
         
-        # Draw cells
+        # Draw cells - ITERATE BY COLUMN INDEX (NOT ZIP)
         x = 0
-        for col_index, (cell_data, width) in enumerate(zip(row_data, self.column_widths)):
+        for col_index in range(len(self.column_widths)):
+            width = self.column_widths[col_index]
+            
             # Draw cell border
             self.canvas.create_line(
                 x, y_offset,
@@ -385,10 +387,15 @@ class VirtualScrollTable(ctk.CTkFrame):
                 fill=self.border_color
             )
             
-            # Draw cell text
-            if col_index < len(row_data) - 1:  # Not actions column (check row_data length)
+            # Get cell data (safe access)
+            cell_data = row_data[col_index] if col_index < len(row_data) else ""
+            
+            # Last column = Actions
+            is_actions_column = (col_index == len(self.column_widths) - 1)
+            
+            if not is_actions_column:
+                # Regular text column
                 text = str(cell_data) if cell_data else "-"
-                # Use grey color for empty data (dash)
                 text_color = "#ADB5BD" if text == "-" else self.text_color
                 self.canvas.create_text(
                     x + 10, y_offset + self.row_height // 2,
@@ -399,20 +406,13 @@ class VirtualScrollTable(ctk.CTkFrame):
                     tags=f"row_{row_index}"
                 )
             else:
-                # Actions column - show icon (improved)
-                self.canvas.create_text(
-                    x + width // 2, y_offset + self.row_height // 2,
-                    text="⋮",
-                    fill=self.action_icon_color,
-                    font=("Segoe UI", 18, "bold"),
-                    anchor="center",
-                    tags=f"row_{row_index}"
-                )
-                # Add subtle circle background for action icon
-                circle_radius = 12
+                # Actions column - icon only
                 cx = x + width // 2
                 cy = y_offset + self.row_height // 2
+                
+                # Circle background on hover
                 if row_index == self.hovered_row:
+                    circle_radius = 12
                     self.canvas.create_oval(
                         cx - circle_radius, cy - circle_radius,
                         cx + circle_radius, cy + circle_radius,
@@ -420,15 +420,16 @@ class VirtualScrollTable(ctk.CTkFrame):
                         outline="",
                         tags=f"row_{row_index}"
                     )
-                    # Redraw icon on top
-                    self.canvas.create_text(
-                        cx, cy,
-                        text="⋮",
-                        fill=self.action_icon_color,
-                        font=("Segoe UI", 18, "bold"),
-                        anchor="center",
-                        tags=f"row_{row_index}"
-                    )
+                
+                # Action icon (always on top)
+                self.canvas.create_text(
+                    cx, cy,
+                    text="⋮",
+                    fill=self.action_icon_color,
+                    font=("Segoe UI", 18, "bold"),
+                    anchor="center",
+                    tags=f"row_{row_index}"
+                )
             
             x += width
     
