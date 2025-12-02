@@ -76,7 +76,7 @@ class VirtualScrollTable(ctk.CTkFrame):
             bg=self.header_bg,
             highlightthickness=0
         )
-        self.header_canvas.grid(row=0, column=0, sticky="ew")
+        self.header_canvas.grid(row=0, column=0, sticky="w")
         
         # Main canvas for rows
         canvas_height = self.row_height * self.visible_rows
@@ -90,14 +90,17 @@ class VirtualScrollTable(ctk.CTkFrame):
             width=canvas_width,  # Fixed width (no expansion)
             cursor=""  # Remove cursor
         )
-        self.canvas.grid(row=1, column=0, sticky="nsew")
+        self.canvas.grid(row=1, column=0, sticky="ns")
         
-        # Scrollbar
-        self.scrollbar = ctk.CTkScrollbar(
-            self,
-            command=self._on_scroll
-        )
-        self.scrollbar.grid(row=1, column=1, sticky="ns")
+        # Scrollbar (only if pagination is disabled)
+        if not self.enable_pagination:
+            self.scrollbar = ctk.CTkScrollbar(
+                self,
+                command=self._on_scroll
+            )
+            self.scrollbar.grid(row=1, column=1, sticky="ns")
+        else:
+            self.scrollbar = None  # No scrollbar with pagination
         
         # Bind events
         self.canvas.bind("<Configure>", self._on_canvas_configure)
@@ -285,6 +288,9 @@ class VirtualScrollTable(ctk.CTkFrame):
     
     def _update_scrollbar(self):
         """Update scrollbar position and size"""
+        if self.scrollbar is None:  # No scrollbar with pagination
+            return
+        
         data_to_use = self.filtered_data if self.enable_pagination else self.data
         total_rows = len(data_to_use)
         if total_rows <= self.visible_rows:
