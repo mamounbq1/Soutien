@@ -68,9 +68,11 @@ class VirtualScrollTable(ctk.CTkFrame):
             self.grid_rowconfigure(2, weight=0)  # Pagination row
         
         # Header canvas
+        header_width = sum(self.column_widths)  # Fixed width based on columns
         self.header_canvas = Canvas(
             self,
             height=self.row_height,
+            width=header_width,  # Fixed width (no expansion)
             bg=self.header_bg,
             highlightthickness=0
         )
@@ -78,12 +80,14 @@ class VirtualScrollTable(ctk.CTkFrame):
         
         # Main canvas for rows
         canvas_height = self.row_height * self.visible_rows
+        canvas_width = sum(self.column_widths)  # Fixed width based on columns
         self.canvas = Canvas(
             self,
             bg=self.bg_color,
             highlightthickness=1,
             highlightbackground=self.border_color,
             height=canvas_height,
+            width=canvas_width,  # Fixed width (no expansion)
             cursor=""  # Remove cursor
         )
         self.canvas.grid(row=1, column=0, sticky="nsew")
