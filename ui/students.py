@@ -305,13 +305,15 @@ class StudentsPage(ctk.CTkFrame):
         table_card.grid_columnconfigure(0, weight=1)
         table_card.grid_rowconfigure(0, weight=1)
         
-        # Virtual Scrolling Table (High Performance)
+        # Virtual Scrolling Table (High Performance) with Pagination
         self.table = VirtualScrollTable(
             table_card,
             headers=["Nom", "Prénom", "Niveau", "Téléphone", "Tél Parents", "Actions"],
             column_widths=[200, 200, 150, 150, 150, 100],  # Fixed widths for canvas
             row_height=45,
-            visible_rows=12
+            visible_rows=12,
+            rows_per_page=10,  # Show 10 students per page
+            enable_pagination=True  # Enable pagination
         )
         self.table.grid(row=0, column=0, sticky="nsew", padx=20, pady=20)
         

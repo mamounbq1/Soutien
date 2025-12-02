@@ -18,17 +18,24 @@ class VirtualScrollTable(ctk.CTkFrame):
     Only renders visible rows for optimal performance
     """
     
-    def __init__(self, parent, headers, column_widths=None, row_height=45, visible_rows=12):
+    def __init__(self, parent, headers, column_widths=None, row_height=45, visible_rows=12, rows_per_page=10, enable_pagination=True):
         super().__init__(parent, fg_color="transparent")
         
         self.headers = headers
         self.column_widths = column_widths or [150] * len(headers)
         self.row_height = row_height
         self.visible_rows = visible_rows
+        self.rows_per_page = rows_per_page
+        self.enable_pagination = enable_pagination
         
         # Data storage
         self.data = []  # All rows data
+        self.filtered_data = []  # Data for current page
         self.row_callbacks = {}  # Callbacks for row actions
+        
+        # Pagination state
+        self.current_page = 1
+        self.total_pages = 1
         
         # Selection state
         self.selected_row = None
@@ -38,16 +45,17 @@ class VirtualScrollTable(ctk.CTkFrame):
         self.scroll_position = 0
         self.max_scroll = 0
         
-        # Colors
-        self.bg_color = ModernTheme.BG_CARD_LIGHT
-        self.header_bg = ModernTheme.PRIMARY
+        # Professional Colors (Improved)
+        self.bg_color = "#FAFBFC"  # Light grey background
+        self.header_bg = "#1E88E5"  # Professional blue
         self.header_fg = "#FFFFFF"
-        self.row_bg = "#FFFFFF"
-        self.row_alt_bg = "#F8F9FA"
-        self.row_hover_bg = "#E3F2FD"
-        self.row_selected_bg = "#BBDEFB"
-        self.border_color = ModernTheme.BORDER_LIGHT
-        self.text_color = ModernTheme.TEXT_PRIMARY_LIGHT
+        self.row_bg = "#FFFFFF"  # Pure white
+        self.row_alt_bg = "#F5F7FA"  # Very light grey
+        self.row_hover_bg = "#E3F2FD"  # Light blue hover
+        self.row_selected_bg = "#BBDEFB"  # Selected blue
+        self.border_color = "#E1E4E8"  # Soft border
+        self.text_color = "#24292E"  # Dark grey text
+        self.action_icon_color = "#1E88E5"  # Blue action icon
         
         self._create_ui()
     
@@ -56,6 +64,8 @@ class VirtualScrollTable(ctk.CTkFrame):
         # Configure grid
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
+        if self.enable_pagination:
+            self.grid_rowconfigure(2, weight=0)  # Pagination row
         
         # Header canvas
         self.header_canvas = Canvas(
@@ -93,6 +103,10 @@ class VirtualScrollTable(ctk.CTkFrame):
         
         # Draw headers
         self._draw_headers()
+        
+        # Pagination controls (if enabled)
+        if self.enable_pagination:
+            self._create_pagination_controls()
     
     def _draw_headers(self):
         """Draw table headers"""
@@ -160,7 +174,8 @@ class VirtualScrollTable(ctk.CTkFrame):
         """Handle mouse movement for hover effect"""
         row_index = (event.y // self.row_height) + self.scroll_position
         
-        if 0 <= row_index < len(self.data):
+        data_to_check = self.filtered_data if self.enable_pagination else self.data
+        if 0 <= row_index < len(data_to_check):
             if self.hovered_row != row_index:
                 self.hovered_row = row_index
                 self._redraw_visible_rows()
@@ -179,7 +194,8 @@ class VirtualScrollTable(ctk.CTkFrame):
         """Handle mouse click on row"""
         row_index = (event.y // self.row_height) + self.scroll_position
         
-        if 0 <= row_index < len(self.data):
+        data_to_check = self.filtered_data if self.enable_pagination else self.data
+        if 0 <= row_index < len(data_to_check):
             # Check if clicked on action buttons area (last column)
             x_pos = event.x
             action_col_start = sum(self.column_widths[:-1])
@@ -251,12 +267,19 @@ class VirtualScrollTable(ctk.CTkFrame):
         menu.destroy()
         if action in self.row_callbacks:
             callback = self.row_callbacks[action]
-            row_data = self.data[row_index]
+            # Get actual row data (accounting for pagination)
+            if self.enable_pagination:
+                # Map visible row index to actual data index
+                actual_index = (self.current_page - 1) * self.rows_per_page + row_index
+                row_data = self.data[actual_index]
+            else:
+                row_data = self.data[row_index]
             callback(row_data)
     
     def _update_scrollbar(self):
         """Update scrollbar position and size"""
-        total_rows = len(self.data)
+        data_to_use = self.filtered_data if self.enable_pagination else self.data
+        total_rows = len(data_to_use)
         if total_rows <= self.visible_rows:
             self.scrollbar.set(0, 1)
             self.max_scroll = 0
@@ -279,8 +302,9 @@ class VirtualScrollTable(ctk.CTkFrame):
             canvas_height = self.row_height * self.visible_rows
         
         # Calculate visible row range
+        data_to_use = self.filtered_data if self.enable_pagination else self.data
         start_row = self.scroll_position
-        end_row = min(start_row + self.visible_rows + 1, len(self.data))
+        end_row = min(start_row + self.visible_rows + 1, len(data_to_use))
         
         # Draw visible rows
         for i in range(start_row, end_row):
@@ -289,7 +313,8 @@ class VirtualScrollTable(ctk.CTkFrame):
     
     def _draw_row(self, row_index, y_offset):
         """Draw a single row"""
-        row_data = self.data[row_index]
+        data_to_use = self.filtered_data if self.enable_pagination else self.data
+        row_data = data_to_use[row_index]
         
         # Determine background color
         if row_index == self.selected_row:
@@ -333,15 +358,36 @@ class VirtualScrollTable(ctk.CTkFrame):
                     tags=f"row_{row_index}"
                 )
             else:
-                # Actions column - show icon
+                # Actions column - show icon (improved)
                 self.canvas.create_text(
                     x + width // 2, y_offset + self.row_height // 2,
                     text="⋮",
-                    fill=ModernTheme.PRIMARY,
-                    font=("Segoe UI", 16, "bold"),
+                    fill=self.action_icon_color,
+                    font=("Segoe UI", 18, "bold"),
                     anchor="center",
                     tags=f"row_{row_index}"
                 )
+                # Add subtle circle background for action icon
+                circle_radius = 12
+                cx = x + width // 2
+                cy = y_offset + self.row_height // 2
+                if row_index == self.hovered_row:
+                    self.canvas.create_oval(
+                        cx - circle_radius, cy - circle_radius,
+                        cx + circle_radius, cy + circle_radius,
+                        fill="#E3F2FD",
+                        outline="",
+                        tags=f"row_{row_index}"
+                    )
+                    # Redraw icon on top
+                    self.canvas.create_text(
+                        cx, cy,
+                        text="⋮",
+                        fill=self.action_icon_color,
+                        font=("Segoe UI", 18, "bold"),
+                        anchor="center",
+                        tags=f"row_{row_index}"
+                    )
             
             x += width
     
@@ -351,23 +397,36 @@ class VirtualScrollTable(ctk.CTkFrame):
         self.scroll_position = 0
         self.selected_row = None
         self.hovered_row = None
-        self._update_scrollbar()
-        self._redraw_visible_rows()
+        
+        if self.enable_pagination:
+            self._update_pagination()
+        else:
+            self.filtered_data = self.data
+            self._update_scrollbar()
+            self._redraw_visible_rows()
     
     def clear(self):
         """Clear all data"""
         self.data = []
+        self.filtered_data = []
         self.scroll_position = 0
         self.selected_row = None
         self.hovered_row = None
+        self.current_page = 1
         self.canvas.delete("all")
-        self._update_scrollbar()
+        if self.enable_pagination:
+            self._update_pagination()
+        else:
+            self._update_scrollbar()
     
     def add_row(self, row_data):
         """Add a single row"""
         self.data.append(row_data)
-        self._update_scrollbar()
-        self._redraw_visible_rows()
+        if self.enable_pagination:
+            self._update_pagination()
+        else:
+            self._update_scrollbar()
+            self._redraw_visible_rows()
     
     def set_row_callback(self, action, callback):
         """Set callback for row actions (edit, delete, etc.)"""
@@ -382,3 +441,180 @@ class VirtualScrollTable(ctk.CTkFrame):
         if self.selected_row is not None and 0 <= self.selected_row < len(self.data):
             return self.data[self.selected_row]
         return None
+    
+    def _create_pagination_controls(self):
+        """Create pagination controls at bottom of table"""
+        pagination_frame = ctk.CTkFrame(
+            self,
+            fg_color="#FFFFFF",
+            corner_radius=0,
+            height=50
+        )
+        pagination_frame.grid(row=2, column=0, columnspan=2, sticky="ew", pady=(5, 0))
+        pagination_frame.grid_columnconfigure(1, weight=1)
+        
+        # Left side - Info
+        info_frame = ctk.CTkFrame(pagination_frame, fg_color="transparent")
+        info_frame.grid(row=0, column=0, sticky="w", padx=15)
+        
+        self.page_info_label = ctk.CTkLabel(
+            info_frame,
+            text="Page 1 sur 1 (0 élèves)",
+            font=("Segoe UI", 11),
+            text_color="#6C757D"
+        )
+        self.page_info_label.pack(side="left")
+        
+        # Right side - Navigation buttons
+        nav_frame = ctk.CTkFrame(pagination_frame, fg_color="transparent")
+        nav_frame.grid(row=0, column=1, sticky="e", padx=15)
+        
+        # First page button
+        self.first_page_btn = ctk.CTkButton(
+            nav_frame,
+            text="⏮",
+            width=35,
+            height=32,
+            corner_radius=6,
+            fg_color="#E9ECEF",
+            text_color="#495057",
+            hover_color="#DEE2E6",
+            command=self._go_to_first_page,
+            font=("Segoe UI", 14)
+        )
+        self.first_page_btn.pack(side="left", padx=2)
+        
+        # Previous page button
+        self.prev_page_btn = ctk.CTkButton(
+            nav_frame,
+            text="◀",
+            width=35,
+            height=32,
+            corner_radius=6,
+            fg_color="#E9ECEF",
+            text_color="#495057",
+            hover_color="#DEE2E6",
+            command=self._go_to_prev_page,
+            font=("Segoe UI", 12)
+        )
+        self.prev_page_btn.pack(side="left", padx=2)
+        
+        # Current page display
+        self.current_page_label = ctk.CTkLabel(
+            nav_frame,
+            text="1",
+            font=("Segoe UI", 12, "bold"),
+            text_color="#1E88E5",
+            width=40,
+            height=32,
+            corner_radius=6,
+            fg_color="#E3F2FD"
+        )
+        self.current_page_label.pack(side="left", padx=5)
+        
+        # Next page button
+        self.next_page_btn = ctk.CTkButton(
+            nav_frame,
+            text="▶",
+            width=35,
+            height=32,
+            corner_radius=6,
+            fg_color="#E9ECEF",
+            text_color="#495057",
+            hover_color="#DEE2E6",
+            command=self._go_to_next_page,
+            font=("Segoe UI", 12)
+        )
+        self.next_page_btn.pack(side="left", padx=2)
+        
+        # Last page button
+        self.last_page_btn = ctk.CTkButton(
+            nav_frame,
+            text="⏭",
+            width=35,
+            height=32,
+            corner_radius=6,
+            fg_color="#E9ECEF",
+            text_color="#495057",
+            hover_color="#DEE2E6",
+            command=self._go_to_last_page,
+            font=("Segoe UI", 14)
+        )
+        self.last_page_btn.pack(side="left", padx=2)
+    
+    def _update_pagination(self):
+        """Update pagination state and display"""
+        total_items = len(self.data)
+        self.total_pages = max(1, (total_items + self.rows_per_page - 1) // self.rows_per_page)
+        
+        # Ensure current page is valid
+        self.current_page = max(1, min(self.current_page, self.total_pages))
+        
+        # Calculate start and end indices for current page
+        start_idx = (self.current_page - 1) * self.rows_per_page
+        end_idx = min(start_idx + self.rows_per_page, total_items)
+        
+        # Set filtered data for current page
+        self.filtered_data = self.data[start_idx:end_idx]
+        
+        # Update UI
+        self._update_pagination_ui()
+        self._update_scrollbar()
+        self._redraw_visible_rows()
+    
+    def _update_pagination_ui(self):
+        """Update pagination UI elements"""
+        if not self.enable_pagination:
+            return
+        
+        total_items = len(self.data)
+        start_idx = (self.current_page - 1) * self.rows_per_page + 1
+        end_idx = min(start_idx + len(self.filtered_data) - 1, total_items)
+        
+        # Update info label
+        info_text = f"Page {self.current_page} sur {self.total_pages} ({total_items} élèves)"
+        if total_items > 0:
+            info_text += f" - Affichage de {start_idx} à {end_idx}"
+        self.page_info_label.configure(text=info_text)
+        
+        # Update current page display
+        self.current_page_label.configure(text=str(self.current_page))
+        
+        # Enable/disable navigation buttons
+        if self.current_page <= 1:
+            self.first_page_btn.configure(state="disabled", fg_color="#F8F9FA", text_color="#ADB5BD")
+            self.prev_page_btn.configure(state="disabled", fg_color="#F8F9FA", text_color="#ADB5BD")
+        else:
+            self.first_page_btn.configure(state="normal", fg_color="#E9ECEF", text_color="#495057")
+            self.prev_page_btn.configure(state="normal", fg_color="#E9ECEF", text_color="#495057")
+        
+        if self.current_page >= self.total_pages:
+            self.next_page_btn.configure(state="disabled", fg_color="#F8F9FA", text_color="#ADB5BD")
+            self.last_page_btn.configure(state="disabled", fg_color="#F8F9FA", text_color="#ADB5BD")
+        else:
+            self.next_page_btn.configure(state="normal", fg_color="#E9ECEF", text_color="#495057")
+            self.last_page_btn.configure(state="normal", fg_color="#E9ECEF", text_color="#495057")
+    
+    def _go_to_first_page(self):
+        """Navigate to first page"""
+        if self.current_page != 1:
+            self.current_page = 1
+            self._update_pagination()
+    
+    def _go_to_prev_page(self):
+        """Navigate to previous page"""
+        if self.current_page > 1:
+            self.current_page -= 1
+            self._update_pagination()
+    
+    def _go_to_next_page(self):
+        """Navigate to next page"""
+        if self.current_page < self.total_pages:
+            self.current_page += 1
+            self._update_pagination()
+    
+    def _go_to_last_page(self):
+        """Navigate to last page"""
+        if self.current_page != self.total_pages:
+            self.current_page = self.total_pages
+            self._update_pagination()
