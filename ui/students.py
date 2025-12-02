@@ -26,6 +26,15 @@ from utils import center_window
 from utils.messages import Messages
 
 
+def format_student_niveau(classe, filiere):
+    """Construire un libellé de niveau à partir de la classe et de la filière."""
+    classe = (classe or "").strip()
+    filiere = (filiere or "").strip()
+    if classe and filiere and filiere not in classe:
+        return f"{classe} {filiere}".strip()
+    return classe or filiere or ""
+
+
 class StudentForm(ctk.CTkToplevel):
     """Formulaire d'élève modernisé"""
     
@@ -163,8 +172,18 @@ class StudentForm(ctk.CTkToplevel):
         # Indices: 0=id, 1=nom, 2=prenom, 3=tel, 4=adresse, ..., 10=classe (shown as niveau)
         self.nom.insert(0, self.student_data[1])
         self.prenom.insert(0, self.student_data[2])
-        # ComboBox uses .set() not .insert()
-        self.niveau.set(self.student_data[10] if len(self.student_data) > 10 and self.student_data[10] else "")
+        classe = self.student_data[10] if len(self.student_data) > 10 else ""
+        filiere = self.student_data[9] if len(self.student_data) > 9 else ""
+        niveau_value = format_student_niveau(classe, filiere)
+        available_niveaux = set(self.niveau.cget("values") or [])
+        if niveau_value and niveau_value in available_niveaux:
+            self.niveau.set(niveau_value)
+        elif classe and classe in available_niveaux:
+            self.niveau.set(classe)
+        elif filiere and filiere in available_niveaux:
+            self.niveau.set(filiere)
+        else:
+            self.niveau.set(niveau_value or "")
         self.tel.insert(0, self.student_data[3] or "")
         
         # Extraire tel parent depuis adresse
@@ -174,6 +193,7 @@ class StudentForm(ctk.CTkToplevel):
             for part in parts:
                 if part.startswith("Parent:"):
                     parent_tel = part.replace("Parent:", "").strip()
+                    break
         self.parent_tel.insert(0, parent_tel)
     
     def _save_student(self):
@@ -230,6 +250,8 @@ class StudentsPage(ctk.CTkFrame):
         )
         
         self.db_manager = db_manager
+        self.student_id_map = {}
+        self.student_rows_map = {}
         
         # Configuration de la grille
         self.grid_columnconfigure(0, weight=1)
@@ -327,6 +349,10 @@ class StudentsPage(ctk.CTkFrame):
         if students is None:
             students = self.db_manager.get_all_eleves()  # DIRECT - pas de conversion
         
+        # Reset maps at each load to avoid stale references
+        self.student_id_map = {}
+        self.student_rows_map = {}
+        
         if not students:
             # Clear table and show no data message
             self.table.clear()
@@ -334,62 +360,69 @@ class StudentsPage(ctk.CTkFrame):
         
         # Prepare data for virtual table
         table_data = []
-        self.student_id_map = {}  # Map row index to student data
-        
         for idx, student in enumerate(students):
-            # Extract data with CORRECT indices
-            tel_parent = ""
-            if len(student) > 4 and student[4]:
-                parts = student[4].split('|')
-                for part in parts:
-                    if part.startswith("Parent:"):
-                        tel_parent = part.replace("Parent:", "").strip()
-            
-            # Build niveau: CLASSE or FILIERE or "CLASSE FILIERE"
-            classe = student[10] if len(student) > 10 and student[10] else ""
-            filiere = student[9] if len(student) > 9 and student[9] else ""
-            
-            # Smart niveau display
-            if classe and filiere and filiere not in classe:
-                niveau = f"{classe} {filiere}"  # Ex: "Collège 2AC"
-            elif filiere:
-                niveau = filiere  # Ex: "Prépa", "Licence"
-            elif classe:
-                niveau = classe  # Ex: "Supérieur"
-            else:
-                niveau = ""
-            
-            # Add row data
-            row_data = [
-                student[1],           # Nom
-                student[2],           # Prénom
-                niveau or "-",        # Niveau (combined classe + filiere)
-                student[3] or "-",   # Téléphone
-                tel_parent or "-",   # Tél Parents
-                "Actions"             # Actions placeholder
-            ]
+            row_data = self._format_student_row(student)
             table_data.append(row_data)
-            self.student_id_map[idx] = student  # Store full student data
+            self.student_id_map[idx] = student
+            self.student_rows_map[idx] = row_data
         
         # Set data to virtual table (only renders visible rows)
         self.table.set_data(table_data)
     
-    def _open_edit_dialog_from_data(self, row_data):
+    def _format_student_row(self, student):
+        """Formate les données brutes d'un élève pour l'affichage dans le tableau."""
+        tel_parent = ""
+        if len(student) > 4 and student[4]:
+            parts = student[4].split('|')
+            for part in parts:
+                if part.startswith("Parent:"):
+                    tel_parent = part.replace("Parent:", "").strip()
+                    break
+        classe = student[10] if len(student) > 10 else ""
+        filiere = student[9] if len(student) > 9 else ""
+        niveau = format_student_niveau(classe, filiere)
+        return [
+            student[1],            # Nom
+            student[2],            # Prénom
+            niveau or "-",         # Niveau (combined classe + filiere)
+            student[3] or "-",    # Téléphone
+            tel_parent or "-",    # Tél Parents
+            "Actions"              # Actions placeholder
+        ]
+    
+    def _resolve_student_from_row(self, row_data, actual_index=None):
+        """Récupère l'élève correspondant aux données de ligne ou à l'index fourni."""
+        if actual_index is not None and actual_index in self.student_id_map:
+            return self.student_id_map[actual_index]
+        if row_data is not None:
+            for idx, stored_row in self.student_rows_map.items():
+                if stored_row is row_data or stored_row == row_data:
+                    return self.student_id_map.get(idx)
+        selected_actual = self._get_selected_actual_index()
+        if selected_actual is not None:
+            return self.student_id_map.get(selected_actual)
+        return None
+    
+    def _get_selected_actual_index(self):
+        """Calcule l'index réel de la ligne sélectionnée en tenant compte de la pagination."""
+        selected_idx = self.table.get_selected_row_index()
+        if selected_idx is None:
+            return None
+        if getattr(self.table, "enable_pagination", False):
+            return (self.table.current_page - 1) * self.table.rows_per_page + selected_idx
+        return selected_idx
+    
+    def _open_edit_dialog_from_data(self, row_data, actual_index=None, *_):
         """Open edit dialog from row data (for virtual table callback)"""
-        # Get row index from current selection
-        row_index = self.table.get_selected_row_index()
-        if row_index is not None and row_index in self.student_id_map:
-            student = self.student_id_map[row_index]
+        student = self._resolve_student_from_row(row_data, actual_index)
+        if student:
             self._open_edit_dialog(student)
     
-    def _delete_student_from_data(self, row_data):
+    def _delete_student_from_data(self, row_data, actual_index=None, *_):
         """Delete student from row data (for virtual table callback)"""
-        # Get row index from current selection
-        row_index = self.table.get_selected_row_index()
-        if row_index is not None and row_index in self.student_id_map:
-            student = self.student_id_map[row_index]
-            student_id = student[0]
-            self._delete_student(student_id)
+        student = self._resolve_student_from_row(row_data, actual_index)
+        if student:
+            self._delete_student(student[0])
     
     def _open_add_dialog(self):
         """Ouvre le dialogue d'ajout"""

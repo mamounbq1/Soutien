@@ -5,6 +5,7 @@ High-performance table widget that only renders visible rows
 
 import customtkinter as ctk
 from tkinter import Canvas, Event
+import inspect
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -211,7 +212,9 @@ class VirtualScrollTable(ctk.CTkFrame):
             action_col_start = sum(self.column_widths[:-1])
             
             if x_pos >= action_col_start:
-                # Clicked on actions column
+                # Clicked on actions column - ensure row is treated as selected
+                self.selected_row = row_index
+                self._redraw_visible_rows()
                 self._show_actions_menu(event, row_index)
             else:
                 # Select row
@@ -272,19 +275,42 @@ class VirtualScrollTable(ctk.CTkFrame):
         menu.bind("<FocusOut>", lambda e: menu.destroy())
         menu.focus_set()
     
+    def _callback_accepts_index(self, callback):
+        """Determine if callback supports receiving the row index."""
+        try:
+            signature = inspect.signature(callback)
+        except (TypeError, ValueError):
+            # Built-in or C-implemented callables - assume they handle optional args
+            return True
+        params = list(signature.parameters.values())
+        if any(p.kind in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD) for p in params):
+            return True
+        positional_params = [
+            p for p in params
+            if p.kind in (
+                inspect.Parameter.POSITIONAL_ONLY,
+                inspect.Parameter.POSITIONAL_OR_KEYWORD
+            )
+        ]
+        return len(positional_params) >= 2
+    
     def _execute_action(self, menu, action, row_index):
         """Execute action callback and close menu"""
         menu.destroy()
         if action in self.row_callbacks:
             callback = self.row_callbacks[action]
-            # Get actual row data (accounting for pagination)
+            # Determine actual index in full dataset
             if self.enable_pagination:
-                # Map visible row index to actual data index
                 actual_index = (self.current_page - 1) * self.rows_per_page + row_index
-                row_data = self.data[actual_index]
             else:
-                row_data = self.data[row_index]
-            callback(row_data)
+                actual_index = row_index
+            row_data = None
+            if 0 <= actual_index < len(self.data):
+                row_data = self.data[actual_index]
+            if self._callback_accepts_index(callback):
+                callback(row_data, actual_index)
+            else:
+                callback(row_data)
     
     def _update_scrollbar(self):
         """Update scrollbar position and size"""
@@ -444,7 +470,13 @@ class VirtualScrollTable(ctk.CTkFrame):
             self._redraw_visible_rows()
     
     def set_row_callback(self, action, callback):
-        """Set callback for row actions (edit, delete, etc.)"""
+        """Set callback for row actions (edit, delete, etc.)
+        
+        The callback will be invoked as `callback(row_data, actual_index)` when it
+        accepts at least two positional arguments (or variable positional args).
+        For backward compatibility, callbacks expecting a single argument still
+        receive only the `row_data` list.
+        """
         self.row_callbacks[action] = callback
     
     def get_selected_row_index(self):
