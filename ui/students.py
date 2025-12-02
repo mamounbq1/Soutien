@@ -312,7 +312,7 @@ class StudentsPage(ctk.CTkFrame):
             headers=["Nom", "Prénom", "Niveau", "Téléphone", "Tél. Parents", "Actions"],
             column_widths=[200, 200, 160, 145, 145, 100],  # Increased widths (total: 950px)
             row_height=45,
-            visible_rows=11,  # 11 rows visible (shows 10 comfortably with margin)
+            visible_rows=12,  # 12 rows visible (ensures all 10 students are fully visible)
             rows_per_page=10,  # Show 10 students per page
             enable_pagination=True  # Enable pagination
         )
