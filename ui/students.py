@@ -337,7 +337,7 @@ class StudentsPage(ctk.CTkFrame):
         self.student_id_map = {}  # Map row index to student data
         
         for idx, student in enumerate(students):
-            # Extract data
+            # Extract data with CORRECT indices
             tel_parent = ""
             if len(student) > 4 and student[4]:
                 parts = student[4].split('|')
@@ -345,13 +345,25 @@ class StudentsPage(ctk.CTkFrame):
                     if part.startswith("Parent:"):
                         tel_parent = part.replace("Parent:", "").strip()
             
-            niveau = student[10] if len(student) > 10 else ""
+            # Build niveau: CLASSE or FILIERE or "CLASSE FILIERE"
+            classe = student[10] if len(student) > 10 and student[10] else ""
+            filiere = student[9] if len(student) > 9 and student[9] else ""
+            
+            # Smart niveau display
+            if classe and filiere and filiere not in classe:
+                niveau = f"{classe} {filiere}"  # Ex: "Collège 2AC"
+            elif filiere:
+                niveau = filiere  # Ex: "Prépa", "Licence"
+            elif classe:
+                niveau = classe  # Ex: "Supérieur"
+            else:
+                niveau = ""
             
             # Add row data
             row_data = [
                 student[1],           # Nom
                 student[2],           # Prénom
-                niveau or "-",        # Niveau
+                niveau or "-",        # Niveau (combined classe + filiere)
                 student[3] or "-",   # Téléphone
                 tel_parent or "-",   # Tél Parents
                 "Actions"             # Actions placeholder
