@@ -80,7 +80,12 @@ class VirtualScrollTable(ctk.CTkFrame):
         self.header_canvas.grid(row=0, column=0, sticky="w")
         
         # Main canvas for rows
-        canvas_height = self.row_height * self.visible_rows
+        # CRITICAL FIX: With pagination, canvas height = rows_per_page (not visible_rows)
+        if self.enable_pagination:
+            canvas_height = self.row_height * self.rows_per_page  # Exactly rows_per_page rows
+        else:
+            canvas_height = self.row_height * self.visible_rows  # Scrollable area
+        
         canvas_width = sum(self.column_widths)  # Fixed width based on columns
         self.canvas = Canvas(
             self,
@@ -338,12 +343,20 @@ class VirtualScrollTable(ctk.CTkFrame):
         
         canvas_height = self.canvas.winfo_height()
         if canvas_height <= 1:
-            canvas_height = self.row_height * self.visible_rows
+            # Use rows_per_page with pagination, visible_rows without
+            rows_to_render = self.rows_per_page if self.enable_pagination else self.visible_rows
+            canvas_height = self.row_height * rows_to_render
         
         # Calculate visible row range
         data_to_use = self.filtered_data if self.enable_pagination else self.data
         start_row = self.scroll_position
-        end_row = min(start_row + self.visible_rows + 1, len(data_to_use))
+        
+        # With pagination: render all rows in filtered_data (no scrolling)
+        # Without pagination: render visible_rows + buffer
+        if self.enable_pagination:
+            end_row = len(data_to_use)  # Render ALL rows on current page
+        else:
+            end_row = min(start_row + self.visible_rows + 1, len(data_to_use))
         
         # Draw visible rows
         for i in range(start_row, end_row):
