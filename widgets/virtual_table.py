@@ -360,7 +360,7 @@ class VirtualScrollTable(ctk.CTkFrame):
             )
             
             # Draw cell text
-            if col_index < len(row_data) - 1:  # Not actions column
+            if col_index < len(self.column_widths) - 1:  # Not actions column (use column_widths, not row_data)
                 text = str(cell_data) if cell_data else "-"
                 # Use grey color for empty data (dash)
                 text_color = "#ADB5BD" if text == "-" else self.text_color
