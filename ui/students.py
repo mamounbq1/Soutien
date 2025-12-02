@@ -258,7 +258,7 @@ class StudentsPage(ctk.CTkFrame):
         # Barre de recherche
         search_bar = SearchBar(
             search_frame,
-            placeholder="Rechercher un élève par nom, prénom ou téléphone...",
+            placeholder="Rechercher par Nom, Prénom ou ID Élève...",
             search_callback=self._perform_search,
             refresh_callback=self._load_students
         )
@@ -306,10 +306,11 @@ class StudentsPage(ctk.CTkFrame):
         table_card.grid_rowconfigure(0, weight=1)
         
         # Virtual Scrolling Table (High Performance) with Pagination
+        # Optimized column widths to eliminate horizontal scroll
         self.table = VirtualScrollTable(
             table_card,
-            headers=["Nom", "Prénom", "Niveau", "Téléphone", "Tél Parents", "Actions"],
-            column_widths=[200, 200, 150, 150, 150, 100],  # Fixed widths for canvas
+            headers=["Nom", "Prénom", "Niveau", "Téléphone", "Tél. Parents", "Actions"],
+            column_widths=[180, 180, 140, 135, 135, 80],  # Optimized widths (total: 850px)
             row_height=45,
             visible_rows=12,
             rows_per_page=10,  # Show 10 students per page

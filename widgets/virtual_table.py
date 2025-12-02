@@ -349,10 +349,12 @@ class VirtualScrollTable(ctk.CTkFrame):
             # Draw cell text
             if col_index < len(row_data) - 1:  # Not actions column
                 text = str(cell_data) if cell_data else "-"
+                # Use grey color for empty data (dash)
+                text_color = "#ADB5BD" if text == "-" else self.text_color
                 self.canvas.create_text(
                     x + 10, y_offset + self.row_height // 2,
                     text=text,
-                    fill=self.text_color,
+                    fill=text_color,
                     font=("Segoe UI", 10),
                     anchor="w",
                     tags=f"row_{row_index}"
