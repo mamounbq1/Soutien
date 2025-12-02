@@ -77,11 +77,14 @@ class VirtualScrollTable(ctk.CTkFrame):
         self.header_canvas.grid(row=0, column=0, sticky="ew")
         
         # Main canvas for rows
+        canvas_height = self.row_height * self.visible_rows
         self.canvas = Canvas(
             self,
             bg=self.bg_color,
             highlightthickness=1,
-            highlightbackground=self.border_color
+            highlightbackground=self.border_color,
+            height=canvas_height,
+            cursor=""  # Remove cursor
         )
         self.canvas.grid(row=1, column=0, sticky="nsew")
         

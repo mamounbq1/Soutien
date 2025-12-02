@@ -208,35 +208,10 @@ class DatabaseCompatibility(DatabaseManagerV2Extended):
         return self.delete_eleve(student_id)
     
     def search_students(self, query):
-        """Adapter search_eleves"""
-        eleves = self.search_eleves(query)
-        result = []
-        for eleve in eleves:
-            # Extraire les informations de l'adresse
-            parent_tel = ""
-            niveau = ""
-            filiere = ""
-            
-            if eleve[4]:  # Si adresse existe
-                parts = eleve[4].split(" | ")
-                for part in parts:
-                    if part.startswith("Parent:"):
-                        parent_tel = part.replace("Parent:", "").strip()
-                    elif part.startswith("Niveau:"):
-                        niveau = part.replace("Niveau:", "").strip()
-                    elif part.startswith("Filière:"):
-                        filiere = part.replace("Filière:", "").strip()
-            
-            result.append((
-                eleve[0],  # id
-                eleve[1],  # nom
-                eleve[2],  # prenom
-                niveau,    # niveau
-                filiere,   # filiere
-                eleve[3] or "",  # tel
-                parent_tel,      # parent_tel
-                eleve[6] if len(eleve) > 6 else ""  # date_inscription
-            ))
+        """Adapter search_eleves - Returns same format as get_all_eleves"""
+        # Simply return the raw search results from search_eleves
+        # This maintains consistency with get_all_eleves format
+        return self.search_eleves(query)
         return result
     
     # ═══════════════════════════════════════════════════════════
