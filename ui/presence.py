@@ -273,7 +273,7 @@ class PresencePage(ctk.CTkFrame):
             variable=status_var,
             value="present",
             fg_color=ModernTheme.SUCCESS,
-            hover_color=ModernTheme.SUCCESS_HOVER
+            hover_color=ModernTheme.BTN_SUCCESS_HOVER
         )
         rb_present.pack(side="left", padx=8)
         
@@ -283,7 +283,7 @@ class PresencePage(ctk.CTkFrame):
             variable=status_var,
             value="absent",
             fg_color=ModernTheme.DANGER,
-            hover_color=ModernTheme.DANGER_HOVER
+            hover_color=ModernTheme.BTN_DANGER_HOVER
         )
         rb_absent.pack(side="left", padx=8)
         
@@ -293,7 +293,7 @@ class PresencePage(ctk.CTkFrame):
             variable=status_var,
             value="retard",
             fg_color=ModernTheme.WARNING,
-            hover_color=ModernTheme.WARNING_HOVER
+            hover_color=ModernTheme.BTN_WARNING_HOVER
         )
         rb_late.pack(side="left", padx=8)
         

@@ -71,6 +71,13 @@ class ModernTheme:
         'indigo': ('#3F51B5', '#303F9F'),
     }
     
+    @staticmethod
+    def get_stat_color(index):
+        """Retourne une couleur de carte statistique basée sur l'index"""
+        colors_list = ['blue', 'orange', 'purple', 'teal', 'green', 'lime', 'pink', 'indigo']
+        color_name = colors_list[index % len(colors_list)]
+        return ModernTheme.STAT_CARD_COLORS[color_name]
+    
     # === BOUTONS ===
     BTN_PRIMARY = PRIMARY
     BTN_PRIMARY_HOVER = PRIMARY_DARK
@@ -80,6 +87,10 @@ class ModernTheme:
     BTN_DANGER_HOVER = "#E53935"
     BTN_SUCCESS = SUCCESS
     BTN_SUCCESS_HOVER = "#43A047"
+    BTN_WARNING = WARNING
+    BTN_WARNING_HOVER = "#FB8C00"
+    BTN_INFO = INFO
+    BTN_INFO_HOVER = "#039BE5"
     
     # === BORDURES ===
     BORDER_LIGHT = "#E0E0E0"
