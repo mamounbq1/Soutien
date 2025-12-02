@@ -275,11 +275,13 @@ class StudentsPage(ctk.CTkFrame):
         )
         filter_label.pack(side="left", padx=(0, 10))
         
-        # ComboBox niveau
+        # ComboBox niveau - Load from DB
+        niveaux_list = self._get_niveaux()
+        filter_values = ["Tous"] + niveaux_list
         self.filter_niveau = ModernComboBox(
             filters_frame,
-            values=["Tous", "Primaire", "Collège", "Lycée", "Supérieur"],
-            width=150
+            values=filter_values,
+            width=200
         )
         self.filter_niveau.set("Tous")
         self.filter_niveau.configure(command=self._apply_filters)
@@ -438,7 +440,23 @@ class StudentsPage(ctk.CTkFrame):
         # Appliquer le filtre de niveau
         niveau_filter = self.filter_niveau.get()
         if niveau_filter != "Tous" and results:
-            results = [s for s in results if s[3] == niveau_filter]
+            # Filtrage intelligent basé sur la structure de niveau
+            filtered = []
+            for s in results:
+                filiere = s[9] if len(s) > 9 else ""  # Index 9 = filiere (niveau détaillé)
+                classe = s[10] if len(s) > 10 else ""  # Index 10 = classe (catégorie)
+                
+                # Si niveau sélectionné contient un espace (ex: "Primaire CE1")
+                if " " in niveau_filter:
+                    # Matcher "classe + filiere" (ex: "Primaire" + "CE1" = "Primaire CE1")
+                    full_niveau = f"{classe} {filiere}".strip()
+                    if full_niveau == niveau_filter:
+                        filtered.append(s)
+                else:
+                    # Matcher soit filiere soit classe directement
+                    if filiere == niveau_filter or classe == niveau_filter:
+                        filtered.append(s)
+            results = filtered
         
         self._load_students(results)
     
